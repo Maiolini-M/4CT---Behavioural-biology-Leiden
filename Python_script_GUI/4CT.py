@@ -113,7 +113,7 @@ menu_bar.add_cascade(label="Help", menu=help_menu)
 guideline_menu = tk.Menu(help_menu, tearoff=0)
 
 def open_4CT_documentation():
-    webbrowser.open("")
+    webbrowser.open("https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/tree/main/Guideline")
 
 help_menu.add_cascade(label="Guidelines", menu=guideline_menu)
 guideline_menu.add_command(label="4CT Documentation", command=open_4CT_documentation)
