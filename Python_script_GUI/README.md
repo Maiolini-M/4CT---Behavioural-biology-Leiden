@@ -10,4 +10,4 @@ When pressing start each song are associated with a speaker and a perch. When th
 ## Update on the script
 *Maiolini Marco, 7/05*
 
-I have programmed the basic function, but as I never programmed something from an input I didn't done yet the perch timout function and the switch function.
+I have programmed the basic function, but as I never programmed something from an input I didn't done the perch timout function and the switch function yet.
