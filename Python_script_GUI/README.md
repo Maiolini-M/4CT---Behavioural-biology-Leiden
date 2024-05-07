@@ -7,6 +7,7 @@ You can have maximum 6 switch in an experiment.
 
 When pressing start each song are associated with a speaker and a perch. When the bird activate the microswitch on the perch (by sitting or hopping) in the log should be registered the count and in which speaker is placed.
 
-## UPDATE ON THE SCRIPT
+## Update on the script
+Maiolini Marco, 7/05
 
 I have programmed the basic function, but as I never programmed something from an input I didn't done yet the perch timout function and the switch function.
