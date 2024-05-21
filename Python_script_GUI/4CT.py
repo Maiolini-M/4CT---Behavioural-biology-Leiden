@@ -15,33 +15,30 @@ from tkinter import messagebox
 import os
 import pygame
 import serial.tools.list_ports   #ARDUINO
+import serial
 import webbrowser
 
-ser = None
+#ARDUINO connection
+#ser = serial.Serial('/dev/ttyACMO', baudrate=115200, timeout = 1)
 
-# Function to initialize the serial port
-def initialize_serial(port, baud_rate):
-    global ser
-    try:
-        ser = serial.Serial(port, baud_rate)
-        print(f"Serial communication initialized on port {port} with baud rate {baud_rate}")
-    except serial.SerialException as e:
-        print(f"Failed to initialize serial communication: {e}")
+def send_command(command):
+    ser.write((command + '\n').encode())
+    
+    response = ser.readline().decode().strip()
+    return response
 
-# Function to handle serial port selection
-def handle_serial_selection(port, baud_rate):
-    if baud_rate:
-        initialize_serial(port, baud_rate)
-    else:
-        print("Please select a baud rate.")
-     
- # Function to handle serial port selection
-def handle_baud_rate_selection(baud_rate, port):
-    if port:
-        initialize_serial(port, baud_rate)
-    else:
-        print("Please select a port.")
-         
+def parse_response(response):
+    parts = response.split(',')
+    position = parts[0].split(':')[1].strip()
+    count = int(parts[1].split(':')[1].strip())
+    return position, count
+
+def on_select(event):
+    selected_value = button_delay_std.get()
+    command = f"pt{selected_value}"
+    response = send_command(command)
+    position, count = parse_response(response)
+        
 # Function to exit the program
 def exit_program():
     if ser is not None:
@@ -62,23 +59,6 @@ root.config(menu=menu_bar)
 file_menu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="File", menu=file_menu)
 
-#Get the serial ports
-available_ports = [port.device for port in serial.tools.list_ports.comports()]
-
-# Add a submenu for port selection
-port_menu = tk.Menu(file_menu, tearoff=0)
-file_menu.add_cascade(label="Select Port", menu=port_menu)
-for port in available_ports:
-    port_menu.add_command(label=port, command=lambda p=port: handle_serial_selection(p))
-  
-# Populate the baud rates
-baud_rates = ["9600", "115200"]
-
-# Add a submenu for baud rate selection
-baud_rate_menu = tk.Menu(file_menu, tearoff=0)
-file_menu.add_cascade(label="Select Baud Rate", menu=baud_rate_menu)
-for baud_rate in baud_rates:
-    baud_rate_menu.add_command(label=baud_rate, command=lambda br=baud_rate: handle_baud_rate_selection(br))
 
 #Window to select the shortcuts
 def open_shortcut_selection_window():
@@ -204,6 +184,7 @@ def milliseconds_time_values():
         for millisecond in range(1000):
                 second_values.append(f"{second:02d}.{millisecond:03d}")
     return second_values
+
 #------------------------------------------------------------------------------
 #Handle the species selection
 def handle_species_choice():
@@ -440,8 +421,9 @@ datetime_label.place(x=380, y=90)
 update_datetime_label()
 
 #Delay setting
-button_delay_std = tk.StringVar(value= "0.200")
-button_delay_label = ttk.Label(first_frame, text="Perch timeout (s)", font=("Times New Roman",10))
+number_range = list(range(50,1000))
+button_delay_std = tk.StringVar(value= "200")
+button_delay_label = ttk.Label(first_frame, text="Perch timeout (ms)", font=("Times New Roman",10))
 button_delay_label.place(x=75, y=140)
 button_delay = ttk.Spinbox(first_frame, textvariable=button_delay_std, values= milliseconds_time_values(), width=8)
 button_delay.place(x=180, y= 140)
@@ -858,6 +840,13 @@ end_button = tk.Button(final_frame, text="END", bg="red", fg="white", font=("Tim
                        command=lambda: [stop_timer(), export_to_txt()])
 end_button.place(x=1060, y=15)
 #------------------------------------------------------------------------------
+#Log action and decode of the response
+for command in commands:
+    response = send_command(command)
+    position, count = parse_response(response)
+    print(f"Sent: {command}, Received Action: {response}")
+    log_action(f"perch number {position}, counter {count}", species_var.get())
+
 # Function to close the serial port if it's open
 def close_serial_port_if_open():
     global ser
