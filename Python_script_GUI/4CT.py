@@ -13,32 +13,86 @@ from datetime import datetime
 from tkinter import filedialog, simpledialog #scrolledtext
 from tkinter import messagebox
 import os
+import time
 import pygame
 import serial.tools.list_ports   #ARDUINO
 import serial
 import webbrowser
+import threading
 
 #ARDUINO connection
-#ser = serial.Serial('/dev/ttyACMO', baudrate=115200, timeout = 1)
+
+# Function to list available serial ports
+def list_serial_ports():
+    ports = serial.tools.list_ports.comports()
+    available_ports = [port.device for port in ports]
+    return available_ports
+
+# Function to find and open the Arduino serial port
+def open_serial_port():
+    available_ports = list_serial_ports()
+    if not available_ports:
+        raise serial.SerialException("No serial ports available.")
+    
+    for port in available_ports:
+        try:
+            ser = serial.Serial(port, baudrate=115200, timeout=1)
+            time.sleep(1)
+            return ser
+        except (serial.SerialException, OSError):
+            continue
+    raise serial.SerialException("Could not open any serial ports.")
+
+#Arduino object
+ser = open_serial_port()
 
 def send_command(command):
     ser.write((command + '\n').encode())
-    
     response = ser.readline().decode().strip()
     return response
 
+#Function to parse single command response
+def parse_single_response(response):
+    parts = response.split(',')
+    action = parts[0].split(':')[1].strip()
+    parameter = int(parts[1].split(':')[1].strip())
+    return action, parameter
+
+#Function to parse Arduino response with multiple values
 def parse_response(response):
     parts = response.split(',')
-    position = parts[0].split(':')[1].strip()
-    count = int(parts[1].split(':')[1].strip())
-    return position, count
-
+    results = []
+    for part in parts:
+        if part.strip():
+            position, count = part.split(',')
+            position = position.split()[-1].strip()
+            count = int(count.split()[-1].strip())
+            results.append((position, count))
+    return results
+            
+#Function to handle the dropdown selection
 def on_select(event):
     selected_value = button_delay_std.get()
-    command = f"pt{selected_value}"
+    command = f"sd{selected_value}"
     response = send_command(command)
-    position, count = parse_response(response)
-        
+    position, count = parse_single_response(response)
+    log_action(f"Sent: {command}, Received Action: {position}, Count: {count}")
+
+def on_get_count():
+    command = "gc"
+    response = send_command(command)
+    values = parse_response(response)
+    results = [f"perch number {pos}, counter {count}" for pos, count in values]
+    log_action(f"Received values: {';'.join(results)}")
+
+def read_from_arduino():
+    while True:
+        if ser.in_waiting > 0:
+            response = ser.readline().decode().strip()
+            values = parse_response(response)
+            results = [f"perch number {pos}, counter {count}" for pos, count in values]
+            log_action(f"Received Values: {';'.join(results)}")
+
 # Function to exit the program
 def exit_program():
     if ser is not None:
@@ -107,6 +161,10 @@ start_time_first_timer = None
 stop_first_timer_flag = False
 start_time_second_timer = None
 stop_second_timer_flag = False
+get_count1 = 0
+get_count2 = 0
+get_count3 = 0
+get_count4 = 0
 
 #------------------------------------------------------------------------------
 #Design the log of action
@@ -256,7 +314,6 @@ def play_sounds(song_name, selected_files):
 
 # def change_songs():
 
-    
 
 def check_start_time(switch_button, start_time):
     if switch_button.get() == 1:
@@ -344,7 +401,6 @@ last_switch_state3 = tk.BooleanVar(value=False) #Initially OFF
 last_switch_state4 = tk.BooleanVar(value=False) #Initially OFF
 last_switch_state5 = tk.BooleanVar(value=False) #Initially OFF
 last_switch_state6 = tk.BooleanVar(value=False) #Initially OFF
-
 #-----------------------------------------
 #LOG
 #Configure the dimensions of the window
@@ -421,11 +477,11 @@ datetime_label.place(x=380, y=90)
 update_datetime_label()
 
 #Delay setting
-number_range = list(range(50,1000))
-button_delay_std = tk.StringVar(value= "200")
+number_range = list(range(0,1000))
+button_delay_std = tk.StringVar(value= "250")
 button_delay_label = ttk.Label(first_frame, text="Perch timeout (ms)", font=("Times New Roman",10))
 button_delay_label.place(x=75, y=140)
-button_delay = ttk.Spinbox(first_frame, textvariable=button_delay_std, values= milliseconds_time_values(), width=8)
+button_delay = ttk.Spinbox(first_frame, textvariable=button_delay_std, values= number_range, width=8)
 button_delay.place(x=180, y= 140)
 
 #Species details
@@ -824,7 +880,7 @@ last_switch_button6 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button4, last_switch_button5, last_switch_button1),
                                                       check_end_time(last_switch_state6, end_time6_var)])
 last_switch_button6.place(x=810, y=290)
-#--------------------------------------------------------
+#------------------------------------------------------------------------------
 #FINAL FRAME
 #Frame
 final_frame = tk.Frame(main_frame, width=1138, height=100)
@@ -841,13 +897,8 @@ end_button = tk.Button(final_frame, text="END", bg="red", fg="white", font=("Tim
 end_button.place(x=1060, y=15)
 #------------------------------------------------------------------------------
 #Log action and decode of the response
-for command in commands:
-    response = send_command(command)
-    position, count = parse_response(response)
-    print(f"Sent: {command}, Received Action: {response}")
-    log_action(f"perch number {position}, counter {count}", species_var.get())
 
-# Function to close the serial port if it's open
+#Function to close the serial port if it's open
 def close_serial_port_if_open():
     global ser
     if ser is not None:
@@ -856,14 +907,14 @@ def close_serial_port_if_open():
         except AttributeError:
             print("Failed to close the serial port.")
 
-# Function to handle window close event
+#Function to handle window close event
 def on_closing():
     close_serial_port_if_open()
     root.destroy()
 
-# Bind the window close event to the on_closing function
+#Bind the window close event to the on_closing function
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
-
 root.mainloop()
+
 
