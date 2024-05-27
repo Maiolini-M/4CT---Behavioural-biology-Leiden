@@ -46,6 +46,15 @@ def open_serial_port():
 #Arduino object
 ser = open_serial_port()
 
+# Send clear command to Arduino
+def send_clear_command():
+    command = "clear"
+    ser.write((command + '/n').encode())
+    response = ser.readline().decode().strip()
+    print(f"Clear command sent, received: {response}")
+    
+send_clear_command()
+
 def send_command(command):
     ser.write((command + '\n').encode())
     response = ser.readline().decode().strip()
@@ -57,62 +66,79 @@ def parse_single_response(response):
     action = parts[0].split(':')[1].strip()
     parameter = int(parts[1].split(':')[1].strip())
     return action, parameter
-
-#Function to parse Arduino response with multiple values
-def parse_response(response):
-    parts = response.split(',')
-    results = []
-    for part in parts:
-        if part.strip():
-            position, count = part.split(',')
-            position = position.split()[-1].strip()
-            count = int(count.split()[-1].strip())
-            results.append((position, count))
-    return results
             
 #Function to handle the dropdown selection
-def on_select(event):
+def on_select(event=None):
     selected_value = button_delay_std.get()
     command = f"sd{selected_value}"
     response = send_command(command)
-    position, count = parse_single_response(response)
-    log_action(f"Sent: {command}, Received Action: {position}, Count: {count}")
+    log_action(f"Sent: {command}, Received Action: {response}", species_var.get())
 
-def on_get_count():
-    command = "gc"
+# #Function to parse Arduino response with multiple values
+# def parse_response(response):
+#     parts = response.split(',')
+#     results = []
+#     for part in parts:
+#         if part.strip():
+#             position, count = part.split(',')
+#             position = position.split()[-1].strip()
+#             count = int(count.split()[-1].strip())
+#             results.append((position, count))
+#     return results
+
+# def on_get_count(perch_number):
+#     command = f"gc{perch_number}"
+#     response = send_command(command)
+#     values = parse_response(response)
+#     results = [f"perch number {pos}, counter {count}" for pos, count in values]
+#     log_action(f"Received values: {';'.join(results)}")
+
+def on_run():
+    command = "run"
     response = send_command(command)
-    values = parse_response(response)
-    results = [f"perch number {pos}, counter {count}" for pos, count in values]
-    log_action(f"Received values: {';'.join(results)}")
+    print("Progam is starting with {response}")
+    
+def on_pause():
+    command = "pause"
+    response = send_command(command)
+    print("Program is stopping")
 
 def read_from_arduino():
     while True:
         if ser.in_waiting > 0:
             response = ser.readline().decode().strip()
-            values = parse_response(response)
-            results = [f"perch number {pos}, counter {count}" for pos, count in values]
-            log_action(f"Received Values: {';'.join(results)}")
+            handle_event_response(response)
+
+def handle_event_response(response):
+    log_action(f"Received: {response}")
+    action, count = parse_single_response(response)
+    if action == "A":
+        log_action(f"Perch 1, count: {count}", species_var.get())
+    elif action == "B":
+        log_action(f"Perch 2, count: {count}", species_var.get())
+    elif action == "C":
+        log_action(f"Perch 3, count: {count}", species_var.get())
+    elif action == "D":
+        log_action(f"Perch 4, count: {count}", species_var.get())
 
 # Function to exit the program
 def exit_program():
     if ser is not None:
         ser.close()  # Close the serial port before exiting if it's open
     root.destroy()
-
 #---------------------------------------------------
 #Window name
 root = tk.Tk()
 root.title("4CT")
 root.geometry("1800x900")
 root.resizable(width=False, height=False)
-    
+
 ###Menu bar
 menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
 
 file_menu = tk.Menu(menu_bar, tearoff=0)
 menu_bar.add_cascade(label="File", menu=file_menu)
-
 
 #Window to select the shortcuts
 def open_shortcut_selection_window():
@@ -161,10 +187,6 @@ start_time_first_timer = None
 stop_first_timer_flag = False
 start_time_second_timer = None
 stop_second_timer_flag = False
-get_count1 = 0
-get_count2 = 0
-get_count3 = 0
-get_count4 = 0
 
 #------------------------------------------------------------------------------
 #Design the log of action
@@ -221,6 +243,11 @@ def export_to_csv():
     except Exception as e:
         messagebox.showerror("Export Error", f"An error occurred during export: {e}")
 
+def save_csv():
+    filename = f"data_{datetime.now().strftime('%Y%m%d')}.csv"
+    log_data.to_csv(filename, index = False)
+    print(f"Data saved to {filename}")
+    
 # Clear the log
 def clear_log():
     log_text.delete("1.0", tk.END) #Clear the log.text
@@ -243,6 +270,14 @@ def milliseconds_time_values():
                 second_values.append(f"{second:02d}.{millisecond:03d}")
     return second_values
 
+#Save when reach 00:00:00
+def save_at_00():
+    current_time = datetime.now().strftime('%H:%M:%S')
+    if current_time == "00:00:00":
+        save_csv()
+        time.sleep(1)
+    time.sleep(0.5)
+
 #------------------------------------------------------------------------------
 #Handle the species selection
 def handle_species_choice():
@@ -256,6 +291,7 @@ def handle_species_choice():
 #SONG FRAME Functions
 # Dictionary to store selected files for each sensor:
 selected_files_dict = {"SongA": [], "SongB": [], "SongC": [], "SongD": []}
+song_to_speaker = {"SongA": "Speaker1", "SongB": "Speaker2", "SongC": "Speaker3", "SongD": "Speaker4"}
 
 def update_selected_files_textbox(song_name, selected_files_textbox):
     selected_files = selected_files_dict[song_name]
@@ -312,8 +348,139 @@ def play_sounds(song_name, selected_files):
 #------------------------------------------------------------------------------
 #Experimental details
 
-# def change_songs():
+def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
+    while True:
+        response = handle_event_response()  # Assuming handle_event_response() retrieves the response
+        action, count = parse_single_response(response)
+        
+        if action in ["A", "B", "C", "D"]:
+            if action == "A":
+                speaker = speaker_1
+                selected_song = "SongA"
+            elif action == "B":
+                speaker = speaker_2
+                selected_song = "SongB"
+            elif action == "C":
+                speaker = speaker_3
+                selected_song = "SongC"
+            elif action == "D":
+                speaker = speaker_4
+                selected_song = "SongD"
+            
+            if selected_song in selected_files_dict:
+                selected_files = selected_files_dict[selected_song]
+                if selected_files:
+                    command = f"spk{speaker}"
+                    ser.write((command + '\n').encode())
+                    response = ser.readline().decode().strip()
+                    play_sounds(selected_song, selected_files)
+                else:
+                    log_action(f"No audio files selected for {selected_song}", species_var.get())
+            else:
+                log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
+        else:
+            log_action("Invalid action. Waiting for a valid action...", species_var.get())
+            time.sleep(1)
 
+def handle_songs_position(event, number_event):
+    speaker_starting = switch_selection_vars[number_event].get()
+    if speaker_starting == "A-1, B-2, C-3, D-4":
+        speaker_pos(1,2,3,4)
+    elif speaker_starting == "A-1, B-2, C-4, D-3":
+        speaker_pos(1,2,4,3)
+    elif speaker_starting == "A-1, B-4, C-3, D-2":
+        speaker_pos(1,4,3,2)
+    elif speaker_starting == "A-1, B-4, C-2, D-3":
+        speaker_pos(1,4,2,3)    
+    elif speaker_starting == "A-1, B-3, C-2, D-4":
+        speaker_pos(1,3,2,4)
+    elif speaker_starting == "A-1, B-3, C-4, D-2":
+        speaker_pos(1,3,4,2)        
+        
+    elif speaker_starting == "A-2, B-3, C-4, D-1":
+        speaker_pos(2,3,4,1)
+    elif speaker_starting == "A-2, B-1, C-4, D-3":
+        speaker_pos(2,1,4,3)
+    elif speaker_starting == "A-2, B-1, C-3, D-4":
+        speaker_pos(2,1,3,4)  
+    elif speaker_starting == "A-2, B-4, C-3, D-1":
+        speaker_pos(2,4,3,1)
+    elif speaker_starting == "A-2, B-4, C-1, D-3":
+        speaker_pos(2,4,1,3)
+    elif speaker_starting == "A-2, B-3, C-1, D-4":
+        speaker_pos(2,3,1,4)
+
+    elif speaker_starting == "A-3, B-4, C-1, D-2":
+        speaker_pos(3,4,1,2)
+    elif speaker_starting == "A-3, B-4, C-2, D-1":
+        speaker_pos(3,4,2,1)
+    elif speaker_starting == "A-3, B-1, C-2, D-4":
+        speaker_pos(3,1,2,4)
+    elif speaker_starting == "A-3, B-1, C-4, D-2":
+        speaker_pos(3,1,4,2)     
+    elif speaker_starting == "A-3, B-2, C-1, D-4":
+        speaker_pos(3,2,1,4)
+    elif speaker_starting == "A-3, B-2, C-4, D-1":
+        speaker_pos(3,2,4,1)  
+
+    elif speaker_starting == "A-4, B-1, C-2, D-3":
+        speaker_pos(4,1,2,3)
+    elif speaker_starting == "A-4, B-1, C-3, D-2":
+        speaker_pos(4,1,3,2)  
+    elif speaker_starting == "A-4, B-3, C-2, D-1":
+        speaker_pos(4,3,2,1)    
+    elif speaker_starting == "A-4, B-3, C-1, D-2":
+        speaker_pos(4,3,1,2)
+    elif speaker_starting == "A-4, B-2, C-1, D-3":
+        speaker_pos(4,2,1,3)
+    elif speaker_starting == "A-4, B-2, C-3, D-1":
+        speaker_pos(4,2,3,1)
+      
+# # Function to handle dropdown selection for song assignment
+# def on_song_select(event):
+#     selected_songs = [song_var1.get(), song_var2.get(), song_var3.get(), song_var4.get()]
+#     print("Selected songs:", selected_songs)
+#     # Send command to Arduino to play selected songs on respective speakers
+#     for i, song in enumerate(selected_songs):
+#         command = f"play_song_speaker_{i+1}:{song}"
+#         send_command(command)
+
+# # Function to handle dropdown selection for changing speaker assignment
+# def on_speaker_change(event):
+#     speaker_mapping = speaker_var.get()
+#     print("Speaker mapping selected:", speaker_mapping)
+#     # Map the speaker assignments based on the selected option
+#     if speaker_mapping == "1 <-> 3, 2 <-> 4":
+#         swap_speakers(1, 3)
+#         swap_speakers(2, 4)
+#     elif speaker_mapping == "1 <-> 4, 2 <-> 3":
+#         swap_speakers(1, 4)
+#         swap_speakers(2, 3)
+#     # Add other mappings as necessary
+
+# # Function to swap speakers
+# def swap_speakers(speaker_a, speaker_b):
+#     print(f"Swapping songs on speaker {speaker_a} and speaker {speaker_b}")
+#     command = f"swap_speakers:{speaker_a}:{speaker_b}"
+#     send_command(command)
+
+# ttk.Label(root, text="Speaker 1:").grid(row=0, column=0, padx=10, pady=10)
+# ttk.OptionMenu(root, song_var1, songs[0], *songs, command=on_song_select).grid(row=0, column=1, padx=10, pady=10)
+
+# ttk.Label(root, text="Speaker 2:").grid(row=1, column=0, padx=10, pady=10)
+# ttk.OptionMenu(root, song_var2, songs[1], *songs, command=on_song_select).grid(row=1, column=1, padx=10, pady=10)
+
+# ttk.Label(root, text="Speaker 3:").grid(row=2, column=0, padx=10, pady=10)
+# ttk.OptionMenu(root, song_var3, songs[2], *songs, command=on_song_select).grid(row=2, column=1, padx=10, pady=10)
+
+# ttk.Label(root, text="Speaker 4:").grid(row=3, column=0, padx=10, pady=10)
+# ttk.OptionMenu(root, song_var4, songs[3], *songs, command=on_song_select).grid(row=3, column=1, padx=10, pady=10)
+
+# # Create dropdown menu for speaker mapping
+# speaker_var = tk.StringVar(value="No Change")
+# speaker_mappings = ["No Change", "1 <-> 3, 2 <-> 4", "1 <-> 4, 2 <-> 3"]
+# ttk.Label(root, text="Change Speaker Mapping:").grid(row=4, column=0, padx=10, pady=10)
+# ttk.OptionMenu(root, speaker_var, speaker_mappings[0], *speaker_mappings, command=on_speaker_change).grid(row=4, column=1, padx=10, pady=10)
 
 def check_start_time(switch_button, start_time):
     if switch_button.get() == 1:
@@ -377,8 +544,8 @@ def log_variable_state():
     files_songC = selected_files_dict.get("SongC", [])
     files_songD = selected_files_dict.get("SongD", [])
     
-    log_entry = (f"{current_datetime}\nExperiment name: {experiment_name.get()}\nSpecies tested: {species_var.get()}\nStarting position: {start_var.get()}\
-                \nPerch timeout(s): {button_delay.get()}\
+    log_entry = (f"{current_datetime}\nExperiment name: {experiment_name.get()}\nSpecies tested: {species_var.get()}\nStarting position: {switch_selection_vars[0].get()}\
+                \nPerch timeout(ms): {button_delay.get()}\
                 \nThe files selected for Song A are: {', '.join(files_songA)}\nThe files selected for Song C are: {', '.join(files_songB)}\
                 \nThe files selected for Song C are: {', '.join(files_songC)}\nThe files selected for Song D are: {', '.join(files_songD)}\
                 \nStart time setted for {start_time_spinbox.get()} & End time setted for {end_time_spinbox.get()}")
@@ -501,14 +668,22 @@ other1_entry = tk.Entry(first_frame, state="normal")
 other1_entry.place(x=950, y=90)
 
 #Switching
+switch_selection_vars = {
+    0: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+    2: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+    3: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+    4: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+    5: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+    6: tk.StringVar(value="A-1, B-2, C-3, D-4"),
+}
+
 start_label = tk.Label(first_frame, text= "Starting position", font=("Times New Roman",10))
 start_label.place(x=280, y=140)
-start_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-start_combox = ttk.Combobox(first_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=start_var, width=20, state="readonly", justify="center")
+start_combox = ttk.Combobox(first_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[0], width=20, state="readonly", justify="center")
 start_combox.place(x=400,y=140)
 
 #START AND END OPTIONS
@@ -525,9 +700,8 @@ end_time_spinbox = ttk.Spinbox(first_frame, textvariable=end_time_var, values=cr
 end_time_spinbox.place(x=820, y=140)
 
 # Create a Checkbutton widget
-Save_at = ttk.Checkbutton(first_frame, text="Save at 00:00:00 hour", variable=Save_at_state) #, command=perform_action12)
+Save_at = ttk.Checkbutton(first_frame, text="Save at 00:00:00 hour", variable=Save_at_state, command=save_at_00())
 Save_at.place(x=935, y=140)
-
 #--------------------------------------------------------------
 ## SONG FRAME [1]
 # Frame
@@ -677,12 +851,14 @@ end_switch_label.place(x=790, y=50)
 switch1_label = tk.Label(switch_frame, text="First switch", font=("Times New Roman", 12))
 switch1_label.place(x=230, y=90)
 # Selection
-switch_selection1 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=start_var, width=20, state="readonly", justify="center")
+switch_selection1 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                  "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                  "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                  "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                              textvariable=switch_selection_vars[0], width=20, state="readonly", justify="center")
 switch_selection1.place(x=320, y=90)
+
+switch_selection1.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 0))
 
 # Start time
 start_time1_var = tk.StringVar(value="08:00:00")
@@ -696,7 +872,7 @@ end_time1_spinbox.place(x=580, y=90)
 first_switch_button1 = ttk.Checkbutton(switch_frame, text="", variable=first_switch_state1,
                                        command=lambda: [check_only_one_checkbutton(first_switch_button1, first_switch_button5, first_switch_button4,
                                                                                   first_switch_button3, first_switch_button2, first_switch_button6), 
-                                                        check_start_time(first_switch_state1, start_time1_var)])
+                                                        check_start_time(first_switch_state1, start_time1_var),])
 first_switch_button1.place(x=710, y=90)
 #End switch button
 last_switch_button1 = ttk.Checkbutton(switch_frame, text="", variable=last_switch_state1,
@@ -711,13 +887,14 @@ last_switch_button1.place(x=810, y=90)
 switch2_label = tk.Label(switch_frame, text="2nd switch", font=("Times New Roman", 12))
 switch2_label.place(x=230, y=130)
 # Selection
-switch_selection2_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-switch_selection2 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=switch_selection2_var, width=20, state="readonly", justify="center")
+switch_selection2 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[2], width=20, state="readonly", justify="center")
 switch_selection2.place(x=320, y=130)
+
+switch_selection2.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 2))
 
 # Start time
 start_time2_var = end_time1_var
@@ -746,13 +923,14 @@ last_switch_button2.place(x=810, y=130)
 switch3_label = tk.Label(switch_frame, text="3rd switch", font=("Times New Roman", 12))
 switch3_label.place(x=230, y=170)
 # Selection
-switch_selection3_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-switch_selection3 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=switch_selection3_var, width=20, state="readonly", justify="center")
+switch_selection3 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[3], width=20, state="readonly", justify="center")
 switch_selection3.place(x=320, y=170)
+
+switch_selection3.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 3))
 
 # Start time
 start_time3_var = end_time2_var
@@ -781,13 +959,14 @@ last_switch_button3.place(x=810, y=170)
 switch4_label = tk.Label(switch_frame, text="4th switch", font=("Times New Roman", 12))
 switch4_label.place(x=230, y=210)
 # Selection
-switch_selection4_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-switch_selection4 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=switch_selection4_var, width=20, state="readonly", justify="center")
+switch_selection4 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[4], width=20, state="readonly", justify="center")
 switch_selection4.place(x=320, y=210)
+
+switch_selection4.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 4))
 
 # Start time
 start_time4_var = end_time3_var
@@ -816,13 +995,14 @@ last_switch_button4.place(x=810, y=210)
 switch5_label = tk.Label(switch_frame, text="5th switch", font=("Times New Roman", 12))
 switch5_label.place(x=230, y=250)
 # Selection
-switch_selection5_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-switch_selection5 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=switch_selection5_var, width=20, state="readonly", justify="center")
+switch_selection5 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[5], width=20, state="readonly", justify="center")
 switch_selection5.place(x=320, y=250)
+
+switch_selection5.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 5))
 
 # Start time
 start_time5_var = end_time4_var
@@ -851,13 +1031,14 @@ last_switch_button5.place(x=810, y=250)
 switch6_label = tk.Label(switch_frame, text="6th switch", font=("Times New Roman", 12))
 switch6_label.place(x=230, y=290)
 # Selection
-switch_selection6_var = tk.StringVar(value="A-1, B-2, C-3, D-4")
-switch_selection6 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4", "A-4, B-1, C-2, D-3", "A-3, B-4, C-1, D-2", "A-2, B-3, C-4, D-1",
-                                                  "A-2, B-1, C-4, D-3", "A-1, B-4, C-3, D-2", "A-4, B-3, C-2, D-1", "A-3, B-2, C-1, D-4",
-                                                  "A-1, B-2, C-4, D-3", "A-4, B-1, C-3, D-2", "A-3, B-4, C-2, D-1", "A-2, B-3, C-1, D-2",
-                                                  "A-2, B-1, C-3, D-4", "A-1, B-4, C-2, D-3", "A-4, B-3, C-1, D-2", "A-3, B-2, C-4, D-1"],
-                             textvariable=switch_selection6_var, width=20, state="readonly", justify="center")
+switch_selection6 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
+                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
+                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
+                             textvariable=switch_selection_vars[6], width=20, state="readonly", justify="center")
 switch_selection6.place(x=320, y=290)
+
+switch_selection6.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 6))
 
 # Start time
 start_time6_var = end_time5_var
@@ -888,12 +1069,12 @@ final_frame.place(x=00, y=800)
 
 #START BUTTON
 start_button = tk.Button(final_frame, text="START", bg="green", fg="white", font=("Times New Roman", 12, "bold"),
-                         command=lambda: [start_timer(), log_variable_state()])
+                         command=lambda: [start_timer(), on_select(), log_variable_state(), on_run()])
 start_button.place(x=960, y=15)
 
 #END BUTTON
 end_button = tk.Button(final_frame, text="END", bg="red", fg="white", font=("Times New Roman", 12, "bold"),
-                       command=lambda: [stop_timer(), export_to_txt()])
+                       command=lambda: [stop_timer(), export_to_txt(), on_pause()])
 end_button.place(x=1060, y=15)
 #------------------------------------------------------------------------------
 #Log action and decode of the response
@@ -912,9 +1093,16 @@ def on_closing():
     close_serial_port_if_open()
     root.destroy()
 
+# Start a background thread to read from Arduino
+thread = threading.Thread(target=read_from_arduino)
+thread.daemon = True
+thread.start()
+
 #Bind the window close event to the on_closing function
 root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()
+
+ser.close()
 
 
