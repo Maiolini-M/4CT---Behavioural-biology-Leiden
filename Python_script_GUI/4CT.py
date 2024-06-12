@@ -49,7 +49,7 @@ ser = open_serial_port()
 # Send clear command to Arduino
 def send_clear_command():
     command = "clear"
-    ser.write((command + '/n').encode())
+    ser.write((command + '\n').encode())
     response = ser.readline().decode().strip()
     print(f"Clear command sent, received: {response}")
     
@@ -66,6 +66,7 @@ def send_command(command):
 #     action = parts[0].split(':')[1].strip()
 #     parameter = int(parts[1].split(':')[1].strip())
 #     return action, parameter
+
 def parse_single_response(response):
     parts = response.split(',')
     if len(parts) < 2:
@@ -92,15 +93,15 @@ def on_run():
 def on_pause():
     command = "pause"
     response = send_command(command)
-    print("Program is stopping")
+    print("Program is stopping with {response}")
 
 def read_from_arduino():
     while True:
         if ser and ser.in_waiting > 0:
             response = ser.readline().decode().strip()
-            handle_event_response(response)
+            perch_count_response(response)
 
-def handle_event_response(response):
+def perch_count_response(response):                               ###I will add the delta time here, but first I would like to know if the basic function works
     log_action(f"Received: {response}", species_var.get())
     action, count = parse_single_response(response)
     if action == "A":
@@ -341,55 +342,56 @@ def play_sounds(song_name, selected_files):
 
 def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
     while True:
-        current_time = time.localtime()
-        response = handle_event_response()  # Assuming handle_event_response() retrieves the response
-        action, count = parse_single_response(response)
-        
-        if action in ["A", "B", "C", "D"]:
-            if action == "A":
-                speaker = speaker_1
-                selected_song = "SongA"
-                #Open and Close the relay                                      #If checkbox cheched and time the same, 
-                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                    send_command('sa11')
-                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                    send_command('sa10')
-            elif action == "B":
-                speaker = speaker_2
-                selected_song = "SongB"
-                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                    send_command('sa11')
-                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                    send_command('sa10')
-            elif action == "C":
-                speaker = speaker_3
-                selected_song = "SongC"
-                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                    send_command('sa31')
-                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                    send_command('sa30')
-            elif action == "D":
-                speaker = speaker_4
-                selected_song = "SongD"
-                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                    send_command('sa41')
-                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                    send_command('sa40')
+        if ser and ser.in_waiting > 0:
+            response = ser.readline().decode().strip()
+            current_time = time.localtime()
+            action, count = parse_single_response(response)
             
-            if selected_song in selected_files_dict:
-                selected_files = selected_files_dict[selected_song]
-                if selected_files:
-                    command = f"spk{speaker}"
-                    ser.write((command + '\n').encode())
-                    response = ser.readline().decode().strip()
-                    play_sounds(selected_song, selected_files)
+            if action in ["A", "B", "C", "D"]:
+                if action == "A":
+                    speaker = speaker_1
+                    selected_song = "SongA"
+                    #Open and Close the relay                                      #If checkbox cheched and time the same, 
+                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                        send_command('sa11')
+                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                        send_command('sa10')
+                elif action == "B":
+                    speaker = speaker_2
+                    selected_song = "SongB"
+                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                        send_command('sa11')
+                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                        send_command('sa10')
+                elif action == "C":
+                    speaker = speaker_3
+                    selected_song = "SongC"
+                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                        send_command('sa31')
+                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                        send_command('sa30')
+                elif action == "D":
+                    speaker = speaker_4
+                    selected_song = "SongD"
+                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                        send_command('sa41')
+                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                        send_command('sa40')
+                
+                if selected_song in selected_files_dict:
+                    selected_files = selected_files_dict[selected_song]
+                    if selected_files:
+                        command = f"spk{speaker}"
+                        ser.write((command + '\n').encode())
+                        response = ser.readline().decode().strip()
+                        play_sounds(selected_song, selected_files)
+                    else:
+                        log_action(f"No audio files selected for {selected_song}", species_var.get())
                 else:
-                    log_action(f"No audio files selected for {selected_song}", species_var.get())
+                    log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
             else:
-                log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
-        else:
-            log_action("Invalid action. Waiting for a valid action...", species_var.get())
-            time.sleep(1)
+                log_action("Invalid action. Waiting for a valid action...", species_var.get())
+                time.sleep(1)
 
 def handle_songs_position(event, number_event):
     speaker_starting = switch_selection_vars[number_event].get()
@@ -629,7 +631,6 @@ clear_log_button.pack(side="right", padx=5, pady=10)
 
 notebook = ttk.Notebook(main_frame)
 notebook.pack(fill="both", expand=True)
-
 #-----------------------------------------
 #FIRST FRAME[0]
 first_frame = ttk.Frame(main_frame, width=1138, height=180)
@@ -726,7 +727,6 @@ audio_selection_label = tk.Label(song_frame, text="Audio selection")
 audio_selection_label.place(x=135, y=50)
 selected_files_label = tk.Label(song_frame, text="Selected files")
 selected_files_label.place(x=550, y=50)
-
 #---------------------------------------------------------------------------------------------
 # SONG A
 # Label
@@ -751,7 +751,6 @@ selected_files_textbox1.insert(tk.END, "Selected file: None")
 selected_files_textbox1.place(x=260, y=90)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar1.config(command=selected_files_textbox1.xview)
-
 #---------------------------------------------------------------------------------------------
 # SONG B
 # Label
@@ -776,7 +775,6 @@ selected_files_textbox2.insert(tk.END, "Selected file: None")
 selected_files_textbox2.place(x=260, y=140)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar2.config(command=selected_files_textbox2.xview)
-
 #---------------------------------------------------------------------------------------------
 # SONG C
 # Label
@@ -801,7 +799,6 @@ selected_files_textbox3.insert(tk.END, "Selected file: None")
 selected_files_textbox3.place(x=260, y=190)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar3.config(command=selected_files_textbox3.xview)
-
 #---------------------------------------------------------------------------------------------
 # SONG D
 # Label
@@ -853,7 +850,6 @@ first_switch_label = tk.Label(switch_frame, text="First switch")
 first_switch_label.place(x=690, y=50)
 end_switch_label = tk.Label(switch_frame, text="Last switch")
 end_switch_label.place(x=790, y=50)
-
 #---------------------------------------------------------------------------------------------
 # First switch
 # Label
@@ -889,7 +885,6 @@ last_switch_button1 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button4, last_switch_button5, last_switch_button6),
                                                       check_end_time(last_switch_state1, end_time1_var)])
 last_switch_button1.place(x=810, y=90)
-
 #---------------------------------------------------------------------------------------------
 # Second switch
 # Label
@@ -925,7 +920,6 @@ last_switch_button2 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button4, last_switch_button5, last_switch_button6),
                                                       check_end_time(last_switch_state2, end_time2_var)])
 last_switch_button2.place(x=810, y=130)
-
 #---------------------------------------------------------------------------------------------
 # Third switch
 # Label
@@ -961,7 +955,6 @@ last_switch_button3 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button4, last_switch_button5, last_switch_button6),
                                                       check_end_time(last_switch_state3, end_time3_var)])
 last_switch_button3.place(x=810, y=170)
-
 #---------------------------------------------------------------------------------------------
 # Four switch
 # Label
@@ -997,7 +990,6 @@ last_switch_button4 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button1, last_switch_button5, last_switch_button6),
                                                       check_end_time(last_switch_state4, end_time4_var)])
 last_switch_button4.place(x=810, y=210)
-
 #---------------------------------------------------------------------------------------------
 # Fifth switch
 # Label
@@ -1033,7 +1025,6 @@ last_switch_button5 = ttk.Checkbutton(switch_frame, text="", variable=last_switc
                                                                                 last_switch_button4, last_switch_button1, last_switch_button6),
                                                       check_end_time(last_switch_state5, end_time5_var)])
 last_switch_button5.place(x=810, y=250)
-
 #---------------------------------------------------------------------------------------------
 # Sisxth switch
 # Label
@@ -1113,5 +1104,3 @@ root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
 
 ser.close()
-
-
