@@ -7,7 +7,9 @@ You can have maximum 6 switch in an experiment.
 
 When pressing start each song are associated with a speaker and a perch. When the bird activate the microswitch on the perch (by sitting or hopping) in the log should be registered the count and in which speaker is placed.
 
-![Logic_scheme]()
+![Logic_scheme](https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/blob/main/Python_script_GUI/Logic_scheme_carousel.jpg)
+
+![Logic scheme 2](https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/blob/main/Python_script_GUI/Logic_scheme_two_perches.jpg)
 
 ## Update on the script
 *Maiolini Marco, 12/06*
