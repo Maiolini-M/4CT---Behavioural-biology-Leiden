@@ -20,7 +20,7 @@ import serial
 import webbrowser
 import threading
 
-#ARDUINO connection
+# ARDUINO connection
 
 # Function to list available serial ports
 def list_serial_ports():
@@ -60,38 +60,29 @@ def send_command(command):
     response = ser.readline().decode().strip()
     return response
 
-#Function to parse single command response
+# #Function to parse single command response
+# def parse_single_response(response):
+#     parts = response.split(',')
+#     action = parts[0].split(':')[1].strip()
+#     parameter = int(parts[1].split(':')[1].strip())
+#     return action, parameter
 def parse_single_response(response):
     parts = response.split(',')
-    action = parts[0].split(':')[1].strip()
-    parameter = int(parts[1].split(':')[1].strip())
-    return action, parameter
-            
+    if len(parts) < 2:
+        return "Invalid response format", 0
+    try:
+        action = parts[0].split(':')[1].strip()
+        parameter = int(parts[1].split(':')[1].strip())
+        return action, parameter
+    except (IndexError, ValueError) as e:
+        return "Parsing error", 0
+
 #Function to handle the dropdown selection
 def on_select(event=None):
     selected_value = button_delay_std.get()
     command = f"sd{selected_value}"
     response = send_command(command)
     log_action(f"Sent: {command}, Received Action: {response}", species_var.get())
-
-# #Function to parse Arduino response with multiple values
-# def parse_response(response):
-#     parts = response.split(',')
-#     results = []
-#     for part in parts:
-#         if part.strip():
-#             position, count = part.split(',')
-#             position = position.split()[-1].strip()
-#             count = int(count.split()[-1].strip())
-#             results.append((position, count))
-#     return results
-
-# def on_get_count(perch_number):
-#     command = f"gc{perch_number}"
-#     response = send_command(command)
-#     values = parse_response(response)
-#     results = [f"perch number {pos}, counter {count}" for pos, count in values]
-#     log_action(f"Received values: {';'.join(results)}")
 
 def on_run():
     command = "run"
@@ -105,12 +96,12 @@ def on_pause():
 
 def read_from_arduino():
     while True:
-        if ser.in_waiting > 0:
+        if ser and ser.in_waiting > 0:
             response = ser.readline().decode().strip()
             handle_event_response(response)
 
 def handle_event_response(response):
-    log_action(f"Received: {response}")
+    log_action(f"Received: {response}", species_var.get())
     action, count = parse_single_response(response)
     if action == "A":
         log_action(f"Perch 1, count: {count}", species_var.get())
@@ -350,6 +341,7 @@ def play_sounds(song_name, selected_files):
 
 def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
     while True:
+        current_time = time.localtime()
         response = handle_event_response()  # Assuming handle_event_response() retrieves the response
         action, count = parse_single_response(response)
         
@@ -357,15 +349,32 @@ def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
             if action == "A":
                 speaker = speaker_1
                 selected_song = "SongA"
+                #Open and Close the relay                                      #If checkbox cheched and time the same, 
+                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                    send_command('sa11')
+                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                    send_command('sa10')
             elif action == "B":
                 speaker = speaker_2
                 selected_song = "SongB"
+                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                    send_command('sa11')
+                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                    send_command('sa10')
             elif action == "C":
                 speaker = speaker_3
                 selected_song = "SongC"
+                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                    send_command('sa31')
+                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                    send_command('sa30')
             elif action == "D":
                 speaker = speaker_4
                 selected_song = "SongD"
+                if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+                    send_command('sa41')
+                elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+                    send_command('sa40')
             
             if selected_song in selected_files_dict:
                 selected_files = selected_files_dict[selected_song]
