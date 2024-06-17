@@ -9,11 +9,11 @@ Created on Fri May  3 14:12:03 2024
 import tkinter as tk
 from tkinter import ttk
 from tkinter import Scrollbar
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 from tkinter import filedialog, simpledialog #scrolledtext
 from tkinter import messagebox
 import os
-import time
 import pygame
 import serial.tools.list_ports   #ARDUINO
 import serial
@@ -60,40 +60,23 @@ def send_command(command):
     response = ser.readline().decode().strip()
     return response
 
-# #Function to parse single command response
-# def parse_single_response(response):
-#     parts = response.split(',')
-#     action = parts[0].split(':')[1].strip()
-#     parameter = int(parts[1].split(':')[1].strip())
-#     return action, parameter
-
 def parse_single_response(response):
-    parts = response.split(',')
-    if len(parts) < 2:
+    #parts = response.split(',')
+    if len(response) < 2:
         return "Invalid response format", 0
     try:
-        action = parts[0].split(':')[1].strip()
-        parameter = int(parts[1].split(':')[1].strip())
-        return action, parameter
+        action = response[0]
+        count = int(response[1:])
+        return action, count
     except (IndexError, ValueError) as e:
         return "Parsing error", 0
 
 #Function to handle the dropdown selection
 def on_select(event=None):
     selected_value = button_delay_std.get()
-    command = f"sd{selected_value}"
+    command = f"sd{selected_value} r/sd{selected_value}"
     response = send_command(command)
-    log_action(f"Sent: {command}, Received Action: {response}", species_var.get())
-
-def on_run():
-    command = "run"
-    response = send_command(command)
-    print("Progam is starting with {response}")
-    
-def on_pause():
-    command = "pause"
-    response = send_command(command)
-    print("Program is stopping with {response}")
+    log_action(f"Perch timeout of {command}, Received Action: {response}", species_var.get())
 
 def read_from_arduino():
     while True:
@@ -102,15 +85,21 @@ def read_from_arduino():
             perch_count_response(response)
 
 def perch_count_response(response):                               ###I will add the delta time here, but first I would like to know if the basic function works
-    log_action(f"Received: {response}", species_var.get())
-    action, count = parse_single_response(response)
-    if action == "A":
+    print(f"Received: {response}")
+    
+    try:
+        action, count = parse_single_response(response)
+    except ValueError as e:
+        log_action(f"Error parsing response: {e}", species_var.get())
+        return
+    
+    if action.startswith("A"):
         log_action(f"Perch 1, count: {count}", species_var.get())
-    elif action == "B":
+    elif action.startswith("B"):
         log_action(f"Perch 2, count: {count}", species_var.get())
-    elif action == "C":
+    elif action.startswith("C"):
         log_action(f"Perch 3, count: {count}", species_var.get())
-    elif action == "D":
+    elif action.startswith("D"):
         log_action(f"Perch 4, count: {count}", species_var.get())
 
 # Function to exit the program
@@ -283,7 +272,6 @@ def handle_species_choice():
 #SONG FRAME Functions
 # Dictionary to store selected files for each sensor:
 selected_files_dict = {"SongA": [], "SongB": [], "SongC": [], "SongD": []}
-song_to_speaker = {"SongA": "Speaker1", "SongB": "Speaker2", "SongC": "Speaker3", "SongD": "Speaker4"}
 
 def update_selected_files_textbox(song_name, selected_files_textbox):
     selected_files = selected_files_dict[song_name]
@@ -340,59 +328,6 @@ def play_sounds(song_name, selected_files):
 #------------------------------------------------------------------------------
 #Experimental details
 
-def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
-    while True:
-        if ser and ser.in_waiting > 0:
-            response = ser.readline().decode().strip()
-            current_time = time.localtime()
-            action, count = parse_single_response(response)
-            
-            if action in ["A", "B", "C", "D"]:
-                if action == "A":
-                    speaker = speaker_1
-                    selected_song = "SongA"
-                    #Open and Close the relay                                      #If checkbox cheched and time the same, 
-                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                        send_command('sa11')
-                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                        send_command('sa10')
-                elif action == "B":
-                    speaker = speaker_2
-                    selected_song = "SongB"
-                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                        send_command('sa11')
-                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                        send_command('sa10')
-                elif action == "C":
-                    speaker = speaker_3
-                    selected_song = "SongC"
-                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                        send_command('sa31')
-                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                        send_command('sa30')
-                elif action == "D":
-                    speaker = speaker_4
-                    selected_song = "SongD"
-                    if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-                        send_command('sa41')
-                    elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-                        send_command('sa40')
-                
-                if selected_song in selected_files_dict:
-                    selected_files = selected_files_dict[selected_song]
-                    if selected_files:
-                        command = f"spk{speaker}"
-                        ser.write((command + '\n').encode())
-                        response = ser.readline().decode().strip()
-                        play_sounds(selected_song, selected_files)
-                    else:
-                        log_action(f"No audio files selected for {selected_song}", species_var.get())
-                else:
-                    log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
-            else:
-                log_action("Invalid action. Waiting for a valid action...", species_var.get())
-                time.sleep(1)
-
 def handle_songs_position(event, number_event):
     speaker_starting = switch_selection_vars[number_event].get()
     if speaker_starting == "A-1, B-2, C-3, D-4":
@@ -446,56 +381,23 @@ def handle_songs_position(event, number_event):
         speaker_pos(4,2,1,3)
     elif speaker_starting == "A-4, B-2, C-3, D-1":
         speaker_pos(4,2,3,1)
-      
-# # Function to handle dropdown selection for song assignment
-# def on_song_select(event):
-#     selected_songs = [song_var1.get(), song_var2.get(), song_var3.get(), song_var4.get()]
-#     print("Selected songs:", selected_songs)
-#     # Send command to Arduino to play selected songs on respective speakers
-#     for i, song in enumerate(selected_songs):
-#         command = f"play_song_speaker_{i+1}:{song}"
-#         send_command(command)
 
-# # Function to handle dropdown selection for changing speaker assignment
-# def on_speaker_change(event):
-#     speaker_mapping = speaker_var.get()
-#     print("Speaker mapping selected:", speaker_mapping)
-#     # Map the speaker assignments based on the selected option
-#     if speaker_mapping == "1 <-> 3, 2 <-> 4":
-#         swap_speakers(1, 3)
-#         swap_speakers(2, 4)
-#     elif speaker_mapping == "1 <-> 4, 2 <-> 3":
-#         swap_speakers(1, 4)
-#         swap_speakers(2, 3)
-#     # Add other mappings as necessary
-
-# # Function to swap speakers
-# def swap_speakers(speaker_a, speaker_b):
-#     print(f"Swapping songs on speaker {speaker_a} and speaker {speaker_b}")
-#     command = f"swap_speakers:{speaker_a}:{speaker_b}"
-#     send_command(command)
-
-# ttk.Label(root, text="Speaker 1:").grid(row=0, column=0, padx=10, pady=10)
-# ttk.OptionMenu(root, song_var1, songs[0], *songs, command=on_song_select).grid(row=0, column=1, padx=10, pady=10)
-
-# ttk.Label(root, text="Speaker 2:").grid(row=1, column=0, padx=10, pady=10)
-# ttk.OptionMenu(root, song_var2, songs[1], *songs, command=on_song_select).grid(row=1, column=1, padx=10, pady=10)
-
-# ttk.Label(root, text="Speaker 3:").grid(row=2, column=0, padx=10, pady=10)
-# ttk.OptionMenu(root, song_var3, songs[2], *songs, command=on_song_select).grid(row=2, column=1, padx=10, pady=10)
-
-# ttk.Label(root, text="Speaker 4:").grid(row=3, column=0, padx=10, pady=10)
-# ttk.OptionMenu(root, song_var4, songs[3], *songs, command=on_song_select).grid(row=3, column=1, padx=10, pady=10)
-
-# # Create dropdown menu for speaker mapping
-# speaker_var = tk.StringVar(value="No Change")
-# speaker_mappings = ["No Change", "1 <-> 3, 2 <-> 4", "1 <-> 4, 2 <-> 3"]
-# ttk.Label(root, text="Change Speaker Mapping:").grid(row=4, column=0, padx=10, pady=10)
-# ttk.OptionMenu(root, speaker_var, speaker_mappings[0], *speaker_mappings, command=on_speaker_change).grid(row=4, column=1, padx=10, pady=10)
+def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
+    
+    speaker_info = {}   ###Add more dictionary otherwise the last overload the others
+        
+    speaker_info['speaker_A'] = speaker_1
+    speaker_info['song_A'] = "SongA"
+    speaker_info['speaker_B'] = speaker_2
+    speaker_info['song_B'] = "SongB"
+    speaker_info['speaker_C'] = speaker_3
+    speaker_info['song_C'] = "SongC"
+    speaker_info['speaker_D'] = speaker_4
+    speaker_info['song_D'] = "SongD"
 
 def check_start_time(switch_button, start_time):
     if switch_button.get() == 1:
-        overall_time = start_time_var.get()
+        overall_time = start_time1_var.get()
         if overall_time == start_time.get():
             print("Record ready to start")
         else:
@@ -544,6 +446,129 @@ def update_datetime_label():
     current_datetime = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
     datetime_label.config(text=current_datetime)
     first_frame.after(1000, update_datetime_label)
+
+### Start/End functions
+
+def on_run():
+    command = "n r/n"
+    response = send_command(command)
+    print("Progam is starting with {response}")
+    
+def on_pause():
+    command = "p r/p"
+    response = send_command(command)
+    print("Program is stopping with {response}")
+    
+def on_reset():
+    command = "r r/r"
+    response = send_command(command)
+    print("Program is reset with {response}")
+
+def on_clear():
+    command = "c r/c"
+    response = send_command(command)
+    print("Counter is clear with {response}")
+
+check_speakers_running = True
+
+def activate_speakers():
+    global check_speakers_running
+    check_speakers_running = True
+    # Convert string times to datetime.time objects
+    start_time1 = datetime.strptime(start_time1_var.get(), "%H:%M:%S").time()
+    end_time = datetime.strptime(end_time_var.get(), "%H:%M:%S").time()
+
+    def check_speakers():
+        global check_speakers_running
+        if not check_speakers_running:
+            return
+
+        # Get the current time as a datetime.time object
+        current_time = datetime.now().time()
+
+        if (start_time1 <= current_time < end_time): 
+            send_command('sa11 r/sa11')
+            send_command('sa21 r/sa21')
+            send_command('sa31 r/sa31')
+            send_command('sa41 r/sa41')
+        elif (current_time >= end_time and current_time < (datetime.combine(datetime.today(), end_time) + timedelta(seconds=1)).time()):
+            send_command('sa10 r/sa10')
+            send_command('sa20 r/sa20')
+            send_command('sa30 r/sa30')
+            send_command('sa40 r/sa40')
+
+        # Schedule the next check
+        root.after(1000, check_speakers)  # Check every second
+
+    # Start the first check
+    check_speakers()
+
+def stop_checking_speakers():
+    global check_speakers_running
+    check_speakers_running = False
+
+#def play_speakers():
+    
+# def on_speak1():
+#     command = "sa11 r/sa11"
+#     response = send_command(command)
+#     print("Progam is starting with {response}")
+
+# def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
+#     while True:
+#         if ser and ser.in_waiting > 0:
+#             response = ser.readline().decode().strip()
+#             # current_time = time.localtime()
+#             action, count = parse_single_response(response)
+            
+#             if action[0] in ["A", "B", "C", "D"]:
+#                 if action[0] == "A":
+#                     speaker = speaker_1
+#                     selected_song = "SongA"
+#                     #Open and Close the relay                                      #If checkbox cheched and time the same, 
+#                     # if current_time == start_time1_var.get():
+#                     send_command('sa11 r/sa11')
+#                 #         log_action("Run")
+#                 #     elif current_time == end_time1_var.get() and current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+#                 #         send_command('sa10')
+#                 elif action[0] == "B":
+#                     speaker = speaker_2
+#                     selected_song = "SongB"
+#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+#                     send_command('sa21 r/sa21')
+#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+#                 #         send_command('sa10')
+#                 elif action[0] == "C":
+#                     speaker = speaker_3
+#                     selected_song = "SongC"
+#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+#                     send_command('sa31 r/sa31')
+#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+#                 #         send_command('sa30')
+#                 elif action[0] == "D":
+#                     speaker = speaker_4
+#                     selected_song = "SongD"
+#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
+#                     send_command('sa41 r/sa41')
+#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
+#                 #         send_command('sa40')
+                
+#                 # if selected_song in selected_files_dict:
+#                 #     selected_files = selected_files_dict[selected_song]
+#                 #     if selected_files:
+#                 #         command = f"spk{speaker}"
+#                 #         ser.write((command + '\n').encode())
+#                 #         response = ser.readline().decode().strip()
+#                 #         play_sounds(selected_song, selected_files)
+#             #         else:
+#             #             log_action(f"No audio files selected for {selected_song}", species_var.get())
+#             #     else:
+#             #         log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
+#             # else:
+#             #     log_action("Invalid action. Waiting for a valid action...", species_var.get())
+#                 time.sleep(1)
+
+
 
 #LOG FUNCTION
 def log_variable_state():
@@ -697,10 +722,10 @@ start_combox = ttk.Combobox(first_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2,
 start_combox.place(x=400,y=140)
 
 #START AND END OPTIONS
-start_time_var =tk.StringVar(value="08:00:00")
+start_time1_var =tk.StringVar(value="08:00:00")
 start_time_label = tk.Label(first_frame, text="Start time")
 start_time_label.place(x=580, y=140)
-start_time_spinbox = ttk.Spinbox(first_frame, textvariable=start_time_var, values=create_time_values(), wrap="True", width= 10)
+start_time_spinbox = ttk.Spinbox(first_frame, textvariable=start_time1_var, values=create_time_values(), wrap="True", width= 10)
 start_time_spinbox.place(x=650, y=140)
 
 end_time_var =tk.StringVar(value="16:00:00")
@@ -866,7 +891,6 @@ switch_selection1.place(x=320, y=90)
 switch_selection1.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 0))
 
 # Start time
-start_time1_var = tk.StringVar(value="08:00:00")
 start_time1_spinbox = ttk.Spinbox(switch_frame, textvariable=start_time1_var, values=create_time_values(), wrap="True", width= 10)
 start_time1_spinbox.place(x=480, y=90)
 # End time
@@ -1069,12 +1093,12 @@ final_frame.place(x=00, y=800)
 
 #START BUTTON
 start_button = tk.Button(final_frame, text="START", bg="green", fg="white", font=("Times New Roman", 12, "bold"),
-                         command=lambda: [start_timer(), on_select(), log_variable_state(), on_run()])
+                         command=lambda: [start_timer(), on_select(), log_variable_state(), on_run(), activate_speakers()])
 start_button.place(x=960, y=15)
 
 #END BUTTON
 end_button = tk.Button(final_frame, text="END", bg="red", fg="white", font=("Times New Roman", 12, "bold"),
-                       command=lambda: [stop_timer(), export_to_txt(), on_pause()])
+                       command=lambda: [stop_timer(), export_to_txt(), on_pause(), on_clear(), on_reset(), stop_checking_speakers()])
 end_button.place(x=1060, y=15)
 #------------------------------------------------------------------------------
 #Log action and decode of the response
