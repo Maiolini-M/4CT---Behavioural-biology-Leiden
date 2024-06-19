@@ -19,6 +19,8 @@ import serial.tools.list_ports   #ARDUINO
 import serial
 import webbrowser
 import threading
+import sounddevice as sd
+import soundfile as sf
 
 # ARDUINO connection
 
@@ -94,8 +96,10 @@ def perch_count_response(response):                               ###I will add 
         return
     
     if action.startswith("A"):
+        play_sounds("SongA", speaker_info['song_A'])
         log_action(f"Perch 1, count: {count}", species_var.get())
     elif action.startswith("B"):
+        play_sounds("SongB", speaker_info['song_B'])
         log_action(f"Perch 2, count: {count}", species_var.get())
     elif action.startswith("C"):
         log_action(f"Perch 3, count: {count}", species_var.get())
@@ -164,10 +168,7 @@ guideline_menu.add_command(label="4CT Documentation", command=open_4CT_documenta
 log_data = []
 action_count = 0
 selected_files_dict = {"SongA": [], "SongB": [], "SongC": [], "SongD": []}
-start_time_first_timer = None
-stop_first_timer_flag = False
-start_time_second_timer = None
-stop_second_timer_flag = False
+speaker_info = {}   ###Add more dictionary otherwise the last overload the others
 
 #------------------------------------------------------------------------------
 #Design the log of action
@@ -311,6 +312,19 @@ def select_audio_files(song_name):
             selected_file_labels[song_name].insert(tk.END, "Selected file: None")
             selected_file_labels[song_name].configure(state=tk.DISABLED)
 
+# def play_sounds(song_name, selected_files, output_device=None):
+#     if selected_files:
+#         for file_path in selected_files:
+#             if os.path.exists(file_path):
+#                 data, fs = sf.read(file_path, dtype='float32')
+#                 sd.play(data, fs, device=output_device)
+#                 log_action(f"{song_name} played this file: {os.path.basename(file_path)}", species_var.get())
+#                 sd.wait()  # Wait until file is done playing
+#             else:
+#                 log_action(f"File not found: {file_path}", species_var.get())
+#     else:
+#         log_action(f"No sound selected for {song_name}", species_var.get())
+
 def play_sounds(song_name, selected_files):
     pygame.mixer.init()
     if selected_files:
@@ -381,19 +395,19 @@ def handle_songs_position(event, number_event):
         speaker_pos(4,2,1,3)
     elif speaker_starting == "A-4, B-2, C-3, D-1":
         speaker_pos(4,2,3,1)
-
-def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
     
-    speaker_info = {}   ###Add more dictionary otherwise the last overload the others
-        
-    speaker_info['speaker_A'] = speaker_1
-    speaker_info['song_A'] = "SongA"
-    speaker_info['speaker_B'] = speaker_2
-    speaker_info['song_B'] = "SongB"
-    speaker_info['speaker_C'] = speaker_3
-    speaker_info['song_C'] = "SongC"
-    speaker_info['speaker_D'] = speaker_4
-    speaker_info['song_D'] = "SongD"
+def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
+    global speaker_info
+    speaker_info = {
+        'speaker_A': speaker_1,
+        'song_A' : selected_files_dict["SongA"],
+        'speaker_B': speaker_2,
+        'song_B': selected_files_dict["SongB"],
+        'speaker_C': speaker_3,
+        'song_C': selected_files_dict["SongC"],
+        'speaker_D': speaker_4,
+        'song_D': selected_files_dict["SongD"]
+        }
 
 def check_start_time(switch_button, start_time):
     if switch_button.get() == 1:
@@ -502,6 +516,55 @@ def activate_speakers():
 
     # Start the first check
     check_speakers()
+
+#print(sd.query_devices())
+
+# def play_on_perch(response):
+#     action, count = parse_single_response(response)
+    
+#     if action.startswith ("A"):
+#         play_sounds("SongA", speaker_info['song_A'])#, output_device=speaker)
+#     elif action.startswith ("B"):
+#         play_sounds("SongB", speaker_info['song_B'])#, output_device=speaker)
+#     elif action.startswith ("C"):
+#         play_sounds("SongC", speaker_info['song_C'])#, output_device=speaker) 
+#     elif action.startswith ("D"):
+#         play_sounds("SongD", speaker_info['song_D'])#, output_device=speaker)
+
+
+        
+# def perch_count_response(response):                               ###I will add the delta time here, but first I would like to know if the basic function works
+#     print(f"Received: {response}")
+    
+#     try:
+#         action, count = parse_single_response(response)
+#     except ValueError as e:
+#         log_action(f"Error parsing response: {e}", species_var.get())
+#         return
+    
+#     if action.startswith("A"):
+#         log_action(f"Perch 1, count: {count}", species_var.get())
+#     elif action.startswith("B"):
+#         log_action(f"Perch 2, count: {count}", species_var.get())
+#     elif action.startswith("C"):
+#         log_action(f"Perch 3, count: {count}", species_var.get())
+#     elif action.startswith("D"):
+#         log_action(f"Perch 4, count: {count}", species_var.get())
+
+# def play_sounds(song_name, selected_files):
+#     pygame.mixer.init()
+#     if selected_files:
+#         for file_path in selected_files:
+#             if os.path.exists(file_path):
+#                 pygame.mixer.music.load(file_path)
+#                 pygame.mixer.music.play()
+#                 log_action(f"{song_name} played this file: {os.path.basename(file_path)}", species_var.get())
+#                 while pygame.mixer.music.get_busy():
+#                     pygame.time.Clock().tick(10)
+#             else:
+#                 log_action(f"File not found: {file_path}", species_var.get())
+#     else:
+#         log_action(f"No sound selected for {song_name}", species_var.get())
 
 def stop_checking_speakers():
     global check_speakers_running
