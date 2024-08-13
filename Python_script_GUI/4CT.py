@@ -4,14 +4,13 @@ Created on Fri May  3 14:12:03 2024
 
 @author: marco
 """
-
 ##IMPORT PYTHON FUNCTIONS
 import tkinter as tk
 from tkinter import ttk
 from tkinter import Scrollbar
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
-from tkinter import filedialog, simpledialog #scrolledtext
+from tkinter import filedialog, simpledialog
 from tkinter import messagebox
 import os
 import pygame
@@ -19,11 +18,8 @@ import serial.tools.list_ports   #ARDUINO
 import serial
 import webbrowser
 import threading
-import sounddevice as sd
-import soundfile as sf
 
 # ARDUINO connection
-
 # Function to list available serial ports
 def list_serial_ports():
     ports = serial.tools.list_ports.comports()
@@ -48,17 +44,8 @@ def open_serial_port():
 #Arduino object
 ser = open_serial_port()
 
-# Send clear command to Arduino
-def send_clear_command():
-    command = "clear"
-    ser.write((command + '\n').encode())
-    response = ser.readline().decode().strip()
-    print(f"Clear command sent, received: {response}")
-    
-send_clear_command()
-
 def send_command(command):
-    ser.write((command + '\n').encode())
+    ser.write((command + '\r\n').encode())
     response = ser.readline().decode().strip()
     return response
 
@@ -76,7 +63,7 @@ def parse_single_response(response):
 #Function to handle the dropdown selection
 def on_select(event=None):
     selected_value = button_delay_std.get()
-    command = f"sd{selected_value} r/sd{selected_value}"
+    command = f"sd{selected_value} r/n"
     response = send_command(command)
     log_action(f"Perch timeout of {command}, Received Action: {response}", species_var.get())
 
@@ -86,7 +73,7 @@ def read_from_arduino():
             response = ser.readline().decode().strip()
             perch_count_response(response)
 
-def perch_count_response(response):                               ###I will add the delta time here, but first I would like to know if the basic function works
+def perch_count_response(response):                               
     print(f"Received: {response}")
     
     try:
@@ -96,15 +83,84 @@ def perch_count_response(response):                               ###I will add 
         return
     
     if action.startswith("A"):
-        play_sounds("SongA", speaker_info['song_A'])
+        send_command("sa11 r/n")
         log_action(f"Perch 1, count: {count}", species_var.get())
+        print(f"Playing song for speaker 1: {speaker_info['song_1']}")  # Debug statement
+        play_sounds(f"Song{speaker_info['speaker_1']}", speaker_info['song_1'])
+        send_command("sa10 r/n")
+       
+        if speaker_info['speaker_1'] == "A":
+            countA_textbox.delete("1.0", tk.END)  
+            countA_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_1'] == "B":
+            countB_textbox.delete("1.0", tk.END)
+            countB_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_1'] == "C":
+            countC_textbox.delete("1.0", tk.END)  
+            countC_textbox.insert(tk.END, str(count))
+        elif speaker_info['speaker_1'] == "D":
+            countD_textbox.delete("1.0", tk.END)  
+            countD_textbox.insert(tk.END, str(count))
+    
     elif action.startswith("B"):
-        play_sounds("SongB", speaker_info['song_B'])
+        send_command("sa21 r/n")
         log_action(f"Perch 2, count: {count}", species_var.get())
+        print(f"Playing song for speaker 2: {speaker_info['song_2']}")  # Debug statement
+        play_sounds(f"Song{speaker_info['speaker_2']}", speaker_info['song_2'])
+        send_command("sa20 r/n")
+        
+        if speaker_info['speaker_2'] == "A":
+            countA_textbox.delete("1.0", tk.END)  
+            countA_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_2'] == "B":
+            countB_textbox.delete("1.0", tk.END)
+            countB_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_2'] == "C":
+            countC_textbox.delete("1.0", tk.END)  
+            countC_textbox.insert(tk.END, str(count))
+        elif speaker_info['speaker_2'] == "D":
+            countD_textbox.delete("1.0", tk.END)  
+            countD_textbox.insert(tk.END, str(count))
+        
     elif action.startswith("C"):
+        send_command("sa31 r/n")
         log_action(f"Perch 3, count: {count}", species_var.get())
+        print(f"Playing song for speaker 3: {speaker_info['song_3']}")  # Debug statement
+        play_sounds(f"Song{speaker_info['speaker_3']}", speaker_info['song_3'])
+        send_command("sa30 r/n")
+       
+        if speaker_info['speaker_3'] == "A":
+            countA_textbox.delete("1.0", tk.END)  
+            countA_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_3'] == "B":
+            countB_textbox.delete("1.0", tk.END)
+            countB_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_3'] == "C":
+            countC_textbox.delete("1.0", tk.END)  
+            countC_textbox.insert(tk.END, str(count))
+        elif speaker_info['speaker_3'] == "D":
+            countD_textbox.delete("1.0", tk.END)  
+            countD_textbox.insert(tk.END, str(count))
+    
     elif action.startswith("D"):
-        log_action(f"Perch 4, count: {count}", species_var.get())
+        send_command("sa41 r/n")
+        log_action(f"Perch 4, count: {count}", species_var.get())                        
+        print(f"Playing song for speaker 4: {speaker_info['song_4']}")  # Debug statement
+        play_sounds(f"Song{speaker_info['speaker_4']}", speaker_info['song_4'])
+        send_command("sa40 r/n")
+        
+        if speaker_info['speaker_4'] == "A":
+            countA_textbox.delete("1.0", tk.END)  
+            countA_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_4'] == "B":
+            countB_textbox.delete("1.0", tk.END)
+            countB_textbox.insert(tk.END, str(count)) 
+        elif speaker_info['speaker_4'] == "C":
+            countC_textbox.delete("1.0", tk.END)  
+            countC_textbox.insert(tk.END, str(count))
+        elif speaker_info['speaker_4'] == "D":
+            countD_textbox.delete("1.0", tk.END)  
+            countD_textbox.insert(tk.END, str(count))
 
 # Function to exit the program
 def exit_program():
@@ -115,42 +171,13 @@ def exit_program():
 #Window name
 root = tk.Tk()
 root.title("4CT")
+root.iconbitmap(r"C:/4CT/4CT_logo.ico")
 root.geometry("1800x900")
 root.resizable(width=False, height=False)
 
 ###Menu bar
 menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
-
-file_menu = tk.Menu(menu_bar, tearoff=0)
-menu_bar.add_cascade(label="File", menu=file_menu)
-
-#Window to select the shortcuts
-def open_shortcut_selection_window():
-    # Create a new window
-    shortcut_window = tk.Toplevel(root)
-    shortcut_window.title("Keyboard Shortcut Selection")
-
-    # Add widgets for selecting keyboard shortcuts
-    shortcut_label = tk.Label(shortcut_window, text="Select Keyboard Shortcut:")
-    shortcut_label.pack()
-
-    # Add an entry field for the keyboard shortcut
-    shortcut_entry = tk.Entry(shortcut_window)
-    shortcut_entry.pack()
-
-    # Add buttons for saving or canceling the selection
-    save_button = tk.Button(shortcut_window, text="Save")
-    save_button.pack()
-
-    cancel_button = tk.Button(shortcut_window, text="Cancel", command=shortcut_window.destroy)
-    cancel_button.pack()
-    
-file_menu.add_command(label="Select Shortcut", command=open_shortcut_selection_window)
-
-file_menu.add_separator()
-
-file_menu.add_command(label="Exit", command=exit_program)
 
 ##HELP TAB
 help_menu = tk.Menu(menu_bar, tearoff=0)
@@ -168,7 +195,8 @@ guideline_menu.add_command(label="4CT Documentation", command=open_4CT_documenta
 log_data = []
 action_count = 0
 selected_files_dict = {"SongA": [], "SongB": [], "SongC": [], "SongD": []}
-speaker_info = {}   ###Add more dictionary otherwise the last overload the others
+speaker_info = {}
+store_count = {}
 
 #------------------------------------------------------------------------------
 #Design the log of action
@@ -259,7 +287,6 @@ def save_at_00():
         save_csv()
         time.sleep(1)
     time.sleep(0.5)
-
 #------------------------------------------------------------------------------
 #Handle the species selection
 def handle_species_choice():
@@ -290,8 +317,7 @@ def select_audio_files(song_name):
     )
 
     selected_files = list(file_paths)  # Store full file paths
- #   selected_files = [os.path.splitext(os.path.basename(file_path))[0] for file_path in file_paths]
-    
+   
     if len(selected_files) > 0:
             for other_song in selected_files_dict:
                 if other_song != song_name and set(selected_files) & set(selected_files_dict[other_song]):
@@ -312,19 +338,6 @@ def select_audio_files(song_name):
             selected_file_labels[song_name].insert(tk.END, "Selected file: None")
             selected_file_labels[song_name].configure(state=tk.DISABLED)
 
-# def play_sounds(song_name, selected_files, output_device=None):
-#     if selected_files:
-#         for file_path in selected_files:
-#             if os.path.exists(file_path):
-#                 data, fs = sf.read(file_path, dtype='float32')
-#                 sd.play(data, fs, device=output_device)
-#                 log_action(f"{song_name} played this file: {os.path.basename(file_path)}", species_var.get())
-#                 sd.wait()  # Wait until file is done playing
-#             else:
-#                 log_action(f"File not found: {file_path}", species_var.get())
-#     else:
-#         log_action(f"No sound selected for {song_name}", species_var.get())
-
 def play_sounds(song_name, selected_files):
     pygame.mixer.init()
     if selected_files:
@@ -335,79 +348,101 @@ def play_sounds(song_name, selected_files):
                 log_action(f"{song_name} played this file: {os.path.basename(file_path)}", species_var.get())
                 while pygame.mixer.music.get_busy():
                     pygame.time.Clock().tick(10)
+                    time.sleep(0.5)
+                    
             else:
                 log_action(f"File not found: {file_path}", species_var.get())
     else:
         log_action(f"No sound selected for {song_name}", species_var.get())
 #------------------------------------------------------------------------------
 #Experimental details
-
+# Function to generate schedule based on user input
+def generate_schedule():
+    return [
+        {'start': start_time1_spinbox.get(), 'end': end_time1_spinbox.get(), 'selection': 0},
+        {'start': start_time2_spinbox.get(), 'end': end_time2_spinbox.get(), 'selection': 2},
+        {'start': start_time3_spinbox.get(), 'end': end_time3_spinbox.get(), 'selection': 3},
+        {'start': start_time4_spinbox.get(), 'end': end_time4_spinbox.get(), 'selection': 4},
+        {'start': start_time5_spinbox.get(), 'end': end_time5_spinbox.get(), 'selection': 5}
+    ]
+    
 def handle_songs_position(event, number_event):
     speaker_starting = switch_selection_vars[number_event].get()
     if speaker_starting == "A-1, B-2, C-3, D-4":
-        speaker_pos(1,2,3,4)
+        speaker_pos("A","B","C","D")
     elif speaker_starting == "A-1, B-2, C-4, D-3":
-        speaker_pos(1,2,4,3)
+        speaker_pos("A","B","D","C")
     elif speaker_starting == "A-1, B-4, C-3, D-2":
-        speaker_pos(1,4,3,2)
+        speaker_pos("A","D","C","B")
     elif speaker_starting == "A-1, B-4, C-2, D-3":
-        speaker_pos(1,4,2,3)    
+        speaker_pos("A","C","D","B") 
     elif speaker_starting == "A-1, B-3, C-2, D-4":
-        speaker_pos(1,3,2,4)
+        speaker_pos("A","C","B","D")
     elif speaker_starting == "A-1, B-3, C-4, D-2":
-        speaker_pos(1,3,4,2)        
+        speaker_pos("A","D","B","C")     
         
     elif speaker_starting == "A-2, B-3, C-4, D-1":
-        speaker_pos(2,3,4,1)
+        speaker_pos("D","A","B","C")
     elif speaker_starting == "A-2, B-1, C-4, D-3":
-        speaker_pos(2,1,4,3)
+        speaker_pos("B","A","D","C")
     elif speaker_starting == "A-2, B-1, C-3, D-4":
-        speaker_pos(2,1,3,4)  
+        speaker_pos("B","A","C","D")
     elif speaker_starting == "A-2, B-4, C-3, D-1":
-        speaker_pos(2,4,3,1)
+        speaker_pos("D","A","C","B")
     elif speaker_starting == "A-2, B-4, C-1, D-3":
-        speaker_pos(2,4,1,3)
+        speaker_pos("C","A","D","B")
     elif speaker_starting == "A-2, B-3, C-1, D-4":
-        speaker_pos(2,3,1,4)
+        speaker_pos("C","A","B","D")
 
     elif speaker_starting == "A-3, B-4, C-1, D-2":
-        speaker_pos(3,4,1,2)
+        speaker_pos("C","D","A","B")
     elif speaker_starting == "A-3, B-4, C-2, D-1":
-        speaker_pos(3,4,2,1)
+        speaker_pos("D","C","A","B")
     elif speaker_starting == "A-3, B-1, C-2, D-4":
-        speaker_pos(3,1,2,4)
+        speaker_pos("B","C","A","D")
     elif speaker_starting == "A-3, B-1, C-4, D-2":
-        speaker_pos(3,1,4,2)     
+        speaker_pos("B","D","A","C")     
     elif speaker_starting == "A-3, B-2, C-1, D-4":
-        speaker_pos(3,2,1,4)
+        speaker_pos("C","B","A","D")
     elif speaker_starting == "A-3, B-2, C-4, D-1":
-        speaker_pos(3,2,4,1)  
+        speaker_pos("D","B","A","C")  
 
     elif speaker_starting == "A-4, B-1, C-2, D-3":
-        speaker_pos(4,1,2,3)
+        speaker_pos("B","C","D","A")
     elif speaker_starting == "A-4, B-1, C-3, D-2":
-        speaker_pos(4,1,3,2)  
+        speaker_pos("B","D","C","A")  
     elif speaker_starting == "A-4, B-3, C-2, D-1":
-        speaker_pos(4,3,2,1)    
+        speaker_pos("D","C","B","A") 
     elif speaker_starting == "A-4, B-3, C-1, D-2":
-        speaker_pos(4,3,1,2)
+        speaker_pos("C","D","B","A")
     elif speaker_starting == "A-4, B-2, C-1, D-3":
-        speaker_pos(4,2,1,3)
+        speaker_pos("C","B","D","A")
     elif speaker_starting == "A-4, B-2, C-3, D-1":
-        speaker_pos(4,2,3,1)
+        speaker_pos("D","B","C","A")
     
 def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
-    global speaker_info
+    global speaker_info 
     speaker_info = {
-        'speaker_A': speaker_1,
-        'song_A' : selected_files_dict["SongA"],
-        'speaker_B': speaker_2,
-        'song_B': selected_files_dict["SongB"],
-        'speaker_C': speaker_3,
-        'song_C': selected_files_dict["SongC"],
-        'speaker_D': speaker_4,
-        'song_D': selected_files_dict["SongD"]
+        'song_1': selected_files_dict[f"Song{speaker_1}"],
+        'song_2': selected_files_dict[f"Song{speaker_2}"],
+        'song_3': selected_files_dict[f"Song{speaker_3}"],
+        'song_4': selected_files_dict[f"Song{speaker_4}"],
+        'speaker_1': speaker_1,
+        'speaker_2': speaker_2,
+        'speaker_3': speaker_3,
+        'speaker_4': speaker_4,
         }
+
+# Function to update the speaker_info based on the current time
+def update_speaker_info():
+    current_time = datetime.now().strftime('%H:%M:%S')
+    schedule = generate_schedule()
+    for entry in schedule:
+        if entry['start'] <= current_time <= entry['end']:
+            handle_songs_position(None, entry['selection'])
+            #print(f"Updated speaker_info: {speaker_info}")  
+            break
+    root.after(5000, update_speaker_info)  # Call this function again after 5 second
 
 def check_start_time(switch_button, start_time):
     if switch_button.get() == 1:
@@ -444,6 +479,41 @@ def check_only_one_checkbutton(selected_button, conflicting_button1, conflicting
         conflicting_button3.state(['!disabled'])
         conflicting_button4.state(['!disabled'])
         conflicting_button5.state(['!disabled'])
+
+# Initialize store_count with empty dictionaries for each section
+def initialize_store_count():
+    global store_count
+    store_count = {}
+
+    schedule = generate_schedule()
+    for entry in schedule:
+        selection = entry['selection']
+        store_count[selection] = {
+            "A_position": 0,
+            "B_position": 0,
+            "C_position": 0,
+            "D_position": 0
+        }
+
+def Count_storage():
+    global store_count
+    
+    current_time = datetime.now().strftime('%H:%M:%S')
+    schedule = generate_schedule()
+    
+    for entry in schedule:
+        selection = entry['selection']
+                
+        if entry['start'] <= current_time <= entry['end']:
+            # Safely convert the textbox content to integers, defaulting to 0 if empty
+            store_count[selection]["A_position"] = int(countA_textbox.get("1.0", tk.END).strip() or 0)
+            store_count[selection]["B_position"] = int(countB_textbox.get("1.0", tk.END).strip() or 0)
+            store_count[selection]["C_position"] = int(countC_textbox.get("1.0", tk.END).strip() or 0)
+            store_count[selection]["D_position"] = int(countD_textbox.get("1.0", tk.END).strip() or 0)
+            break
+
+    root.after(5000, Count_storage)  # Call this function again after 5000 milliseconds (5 seconds)
+
 #------------------------------------------------------------------------------
 # Timer Function
 def start_timer():
@@ -462,178 +532,39 @@ def update_datetime_label():
     first_frame.after(1000, update_datetime_label)
 
 ### Start/End functions
-
 def on_run():
     command = "n r/n"
     response = send_command(command)
+    time.sleep(1)
     print("Progam is starting with {response}")
     
 def on_pause():
-    command = "p r/p"
+    command = "p r/n"
     response = send_command(command)
+    time.sleep(1)
     print("Program is stopping with {response}")
     
 def on_reset():
-    command = "r r/r"
+    command = "r r/n"
     response = send_command(command)
+    time.sleep(1)
     print("Program is reset with {response}")
 
 def on_clear():
-    command = "c r/c"
+    command = "c r/n"
     response = send_command(command)
+    time.sleep(1)
     print("Counter is clear with {response}")
 
-check_speakers_running = True
+on_clear()
+ 
+def close_speakers():                     
+        send_command('sa10 r/n')
+        send_command('sa20 r/n')
+        send_command('sa30 r/n')
+        send_command('sa40 r/n')
 
-def activate_speakers():
-    global check_speakers_running
-    check_speakers_running = True
-    # Convert string times to datetime.time objects
-    start_time1 = datetime.strptime(start_time1_var.get(), "%H:%M:%S").time()
-    end_time = datetime.strptime(end_time_var.get(), "%H:%M:%S").time()
-
-    def check_speakers():
-        global check_speakers_running
-        if not check_speakers_running:
-            return
-
-        # Get the current time as a datetime.time object
-        current_time = datetime.now().time()
-
-        if (start_time1 <= current_time < end_time): 
-            send_command('sa11 r/sa11')
-            send_command('sa21 r/sa21')
-            send_command('sa31 r/sa31')
-            send_command('sa41 r/sa41')
-        elif (current_time >= end_time and current_time < (datetime.combine(datetime.today(), end_time) + timedelta(seconds=1)).time()):
-            send_command('sa10 r/sa10')
-            send_command('sa20 r/sa20')
-            send_command('sa30 r/sa30')
-            send_command('sa40 r/sa40')
-
-        # Schedule the next check
-        root.after(1000, check_speakers)  # Check every second
-
-    # Start the first check
-    check_speakers()
-
-#print(sd.query_devices())
-
-# def play_on_perch(response):
-#     action, count = parse_single_response(response)
-    
-#     if action.startswith ("A"):
-#         play_sounds("SongA", speaker_info['song_A'])#, output_device=speaker)
-#     elif action.startswith ("B"):
-#         play_sounds("SongB", speaker_info['song_B'])#, output_device=speaker)
-#     elif action.startswith ("C"):
-#         play_sounds("SongC", speaker_info['song_C'])#, output_device=speaker) 
-#     elif action.startswith ("D"):
-#         play_sounds("SongD", speaker_info['song_D'])#, output_device=speaker)
-
-
-        
-# def perch_count_response(response):                               ###I will add the delta time here, but first I would like to know if the basic function works
-#     print(f"Received: {response}")
-    
-#     try:
-#         action, count = parse_single_response(response)
-#     except ValueError as e:
-#         log_action(f"Error parsing response: {e}", species_var.get())
-#         return
-    
-#     if action.startswith("A"):
-#         log_action(f"Perch 1, count: {count}", species_var.get())
-#     elif action.startswith("B"):
-#         log_action(f"Perch 2, count: {count}", species_var.get())
-#     elif action.startswith("C"):
-#         log_action(f"Perch 3, count: {count}", species_var.get())
-#     elif action.startswith("D"):
-#         log_action(f"Perch 4, count: {count}", species_var.get())
-
-# def play_sounds(song_name, selected_files):
-#     pygame.mixer.init()
-#     if selected_files:
-#         for file_path in selected_files:
-#             if os.path.exists(file_path):
-#                 pygame.mixer.music.load(file_path)
-#                 pygame.mixer.music.play()
-#                 log_action(f"{song_name} played this file: {os.path.basename(file_path)}", species_var.get())
-#                 while pygame.mixer.music.get_busy():
-#                     pygame.time.Clock().tick(10)
-#             else:
-#                 log_action(f"File not found: {file_path}", species_var.get())
-#     else:
-#         log_action(f"No sound selected for {song_name}", species_var.get())
-
-def stop_checking_speakers():
-    global check_speakers_running
-    check_speakers_running = False
-
-#def play_speakers():
-    
-# def on_speak1():
-#     command = "sa11 r/sa11"
-#     response = send_command(command)
-#     print("Progam is starting with {response}")
-
-# def speaker_pos(speaker_1, speaker_2, speaker_3, speaker_4):
-#     while True:
-#         if ser and ser.in_waiting > 0:
-#             response = ser.readline().decode().strip()
-#             # current_time = time.localtime()
-#             action, count = parse_single_response(response)
-            
-#             if action[0] in ["A", "B", "C", "D"]:
-#                 if action[0] == "A":
-#                     speaker = speaker_1
-#                     selected_song = "SongA"
-#                     #Open and Close the relay                                      #If checkbox cheched and time the same, 
-#                     # if current_time == start_time1_var.get():
-#                     send_command('sa11 r/sa11')
-#                 #         log_action("Run")
-#                 #     elif current_time == end_time1_var.get() and current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-#                 #         send_command('sa10')
-#                 elif action[0] == "B":
-#                     speaker = speaker_2
-#                     selected_song = "SongB"
-#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-#                     send_command('sa21 r/sa21')
-#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-#                 #         send_command('sa10')
-#                 elif action[0] == "C":
-#                     speaker = speaker_3
-#                     selected_song = "SongC"
-#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-#                     send_command('sa31 r/sa31')
-#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-#                 #         send_command('sa30')
-#                 elif action[0] == "D":
-#                     speaker = speaker_4
-#                     selected_song = "SongD"
-#                 #     if current_time == start_time1_var.get() or current_time == start_time2_var.get() or current_time == start_time3_var.get() or current_time == start_time4_var.get() or current_time == start_time5_var.get() or current_time == start_time6_var.get():
-#                     send_command('sa41 r/sa41')
-#                 #     elif current_time == end_time1_var.get() or current_time == end_time2_var.get() or current_time == end_time3_var.get() or current_time == end_time4_var.get() or current_time == end_time5_var.get() or current_time == end_time6_var.get():
-#                 #         send_command('sa40')
-                
-#                 # if selected_song in selected_files_dict:
-#                 #     selected_files = selected_files_dict[selected_song]
-#                 #     if selected_files:
-#                 #         command = f"spk{speaker}"
-#                 #         ser.write((command + '\n').encode())
-#                 #         response = ser.readline().decode().strip()
-#                 #         play_sounds(selected_song, selected_files)
-#             #         else:
-#             #             log_action(f"No audio files selected for {selected_song}", species_var.get())
-#             #     else:
-#             #         log_action(f"{selected_song} not found in selected_files_dict", species_var.get())
-#             # else:
-#             #     log_action("Invalid action. Waiting for a valid action...", species_var.get())
-#                 time.sleep(1)
-
-
-
-#LOG FUNCTION
+#LOG Starting FUNCTION
 def log_variable_state():
     current_datetime = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
        
@@ -652,6 +583,37 @@ def log_variable_state():
     log_text.insert(tk.END, log_entry + "\n")
     log_text.see(tk.END)
 
+#LOG Ending function
+def log_ending_state():
+    current_datetime = datetime.now().strftime("%H:%M:%S %d/%m/%Y")
+
+    log_entry = f"{current_datetime}\nExperiment name: {experiment_name.get()}\nSpecies tested: {species_var.get()}\n"
+
+    # List of comboboxes for easier management
+    switch_comboboxes = [
+        switch_selection0,
+        switch_selection2,
+        switch_selection3,
+        switch_selection4,
+        switch_selection5,
+        switch_selection6,
+    ]
+
+    # Iterate over each combobox and its index
+    for i, combobox in enumerate(switch_comboboxes):
+        selected_value = combobox.get()  # Get the selected value from the combobox
+        
+        log_entry += (f"Switch {i}, Position ({selected_value}): \n")
+    
+    for selection, counts in store_count.items():
+        log_entry += (f"Section {selection}: Song A: {counts['A_position']}, "
+                      f"Song B: {counts['B_position']}, Song C: {counts['C_position']}, "
+                      f"Song D: {counts['D_position']}\n")   
+             
+    log_data.append(log_entry)
+    log_text.insert(tk.END, log_entry + "\n")
+    log_text.see(tk.END)
+    
 #Variable of timing
 Save_at_state = tk.BooleanVar(value=True) #Initially ON
 #Switch_state
@@ -775,15 +737,6 @@ switch_selection_vars = {
     6: tk.StringVar(value="A-1, B-2, C-3, D-4"),
 }
 
-start_label = tk.Label(first_frame, text= "Starting position", font=("Times New Roman",10))
-start_label.place(x=280, y=140)
-start_combox = ttk.Combobox(first_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
-                                                 "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
-                                                 "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
-                                                 "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
-                             textvariable=switch_selection_vars[0], width=20, state="readonly", justify="center")
-start_combox.place(x=400,y=140)
-
 #START AND END OPTIONS
 start_time1_var =tk.StringVar(value="08:00:00")
 start_time_label = tk.Label(first_frame, text="Start time")
@@ -818,7 +771,7 @@ selected_files_label.place(x=550, y=50)
 #---------------------------------------------------------------------------------------------
 # SONG A
 # Label
-song1_label = tk.Button(song_frame, text="Song A", font=("Times New Roman", 12), command=lambda: play_sounds("SongA", selected_files_dict["SongA"]))
+song1_label = tk.Button(song_frame, text="Song A", font=("Times New Roman", 12), command=lambda: [send_command("sa11 r/n"), play_sounds("SongA", selected_files_dict["SongA"]), send_command("sa10 r/n")])
 song1_label.place(x=40, y=85)
 # Selection and Button
 select_file_button1 = ttk.Button(song_frame, text="Select File for Song A", command=lambda: select_audio_files("SongA"))
@@ -833,16 +786,20 @@ selected_files_textbox1 = tk.Text(
     wrap=tk.NONE,
     xscrollcommand=listbox_x_scrollbar1.set,
     height=1,
-    width=100,
+    width=90,
     state=tk.NORMAL)
 selected_files_textbox1.insert(tk.END, "Selected file: None")
 selected_files_textbox1.place(x=260, y=90)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar1.config(command=selected_files_textbox1.xview)
+
+#Count Song A
+countA_textbox = tk.Text(song_frame, height = 1, width=10)
+countA_textbox.place(x=1000, y=90)
 #---------------------------------------------------------------------------------------------
 # SONG B
 # Label
-song2_label = tk.Button(song_frame, text="Song B", font=("Times New Roman", 12), command=lambda: play_sounds("SongB", selected_files_dict["SongB"]))
+song2_label = tk.Button(song_frame, text="Song B", font=("Times New Roman", 12), command=lambda: [send_command("sa21 r/n"), play_sounds("SongB", selected_files_dict["SongB"]), send_command("sa20 r/n")])
 song2_label.place(x=40, y=140)
 # Selection and Button
 select_file_button2 = ttk.Button(song_frame, text="Select File for Song B", command=lambda: select_audio_files("SongB"))
@@ -857,16 +814,20 @@ selected_files_textbox2 = tk.Text(
     wrap=tk.NONE,
     xscrollcommand=listbox_x_scrollbar2.set,
     height=1,
-    width=100,
+    width=90,
     state=tk.NORMAL)
 selected_files_textbox2.insert(tk.END, "Selected file: None")
 selected_files_textbox2.place(x=260, y=140)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar2.config(command=selected_files_textbox2.xview)
+
+#Count Song B
+countB_textbox = tk.Text(song_frame, height = 1, width=10)
+countB_textbox.place(x=1000, y=140)
 #---------------------------------------------------------------------------------------------
 # SONG C
 # Label
-song3_label = tk.Button(song_frame, text="Song C", font=("Times New Roman", 12), command=lambda: play_sounds("SongC", selected_files_dict["SongC"]))
+song3_label = tk.Button(song_frame, text="Song C", font=("Times New Roman", 12), command=lambda: [send_command("sa31 r/n"), play_sounds("SongC", selected_files_dict["SongC"]), send_command("sa30 r/n")])
 song3_label.place(x=40, y=190)
 # Selection and Button
 select_file_button3 = ttk.Button(song_frame, text="Select File for Song C", command=lambda: select_audio_files("SongC"))
@@ -881,16 +842,21 @@ selected_files_textbox3 = tk.Text(
     wrap=tk.NONE,
     xscrollcommand=listbox_x_scrollbar3.set,
     height=1,
-    width=100,
+    width=90,
     state=tk.NORMAL)
 selected_files_textbox3.insert(tk.END, "Selected file: None")
 selected_files_textbox3.place(x=260, y=190)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar3.config(command=selected_files_textbox3.xview)
+
+#Count Song C
+countC_textbox = tk.Text(song_frame, height = 1, width=10)
+countC_textbox.place(x=1000, y=190)
+
 #---------------------------------------------------------------------------------------------
 # SONG D
 # Label
-song4_label = tk.Button(song_frame, text="Song D", font=("Times New Roman", 12), command=lambda: play_sounds("SongD", selected_files_dict["SongD"]))
+song4_label = tk.Button(song_frame, text="Song D", font=("Times New Roman", 12), command=lambda: [send_command("sa41 r/n"), play_sounds("SongD", selected_files_dict["SongD"]), send_command("sa40 r/n")])
 song4_label.place(x=40, y=240)
 # Selection and Button
 select_file_button4 = ttk.Button(song_frame, text="Select File for Song D", command=lambda: select_audio_files("SongD"))
@@ -905,12 +871,17 @@ selected_files_textbox4 = tk.Text(
     wrap=tk.NONE,
     xscrollcommand=listbox_x_scrollbar4.set,
     height=1,
-    width=100,
+    width=90,
     state=tk.NORMAL)
 selected_files_textbox4.insert(tk.END, "Selected file: None")
 selected_files_textbox4.place(x=260, y=240)  # Adjust the y-coordinate as needed
 
 listbox_x_scrollbar4.config(command=selected_files_textbox4.xview)
+
+#Count Song D
+countD_textbox = tk.Text(song_frame, height = 1, width=10)
+countD_textbox.place(x=1000, y=240)
+
 
 # Dictionary to check the file selection
 selected_file_labels = {
@@ -918,7 +889,7 @@ selected_file_labels = {
     "SongB": selected_files_textbox2,
     "SongC": selected_files_textbox3,
     "SongD": selected_files_textbox4}
-#--------------------------------------------------------
+#---------------------------------------------------------------------------------------------
 #Switch frame
 switch_frame = tk.Frame(main_frame, width=1138, height=350)
 switch_frame.place(x=00, y=470)
@@ -934,24 +905,24 @@ start_time_label = tk.Label(switch_frame, text="Start time")
 start_time_label.place(x=490, y=50)
 end_time_label = tk.Label(switch_frame, text="End time")
 end_time_label.place(x=590, y=50)
-first_switch_label = tk.Label(switch_frame, text="First switch")
+first_switch_label = tk.Label(switch_frame, text="First position")
 first_switch_label.place(x=690, y=50)
-end_switch_label = tk.Label(switch_frame, text="Last switch")
+end_switch_label = tk.Label(switch_frame, text="Last position")
 end_switch_label.place(x=790, y=50)
 #---------------------------------------------------------------------------------------------
 # First switch
 # Label
-switch1_label = tk.Label(switch_frame, text="First switch", font=("Times New Roman", 12))
+switch1_label = tk.Label(switch_frame, text="Start position", font=("Times New Roman", 12))
 switch1_label.place(x=230, y=90)
 # Selection
-switch_selection1 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
+switch_selection0 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
                                                   "A-2, B-3, C-4, D-1","A-2, B-1, C-4, D-3","A-2, B-1, C-3, D-4","A-2, B-4, C-3, D-1","A-2, B-4, C-1, D-3","A-2, B-3, C-1, D-4",
                                                   "A-3, B-4, C-1, D-2","A-3, B-4, C-2, D-1","A-3, B-1, C-2, D-4","A-3, B-1, C-4, D-2","A-3, B-2, C-1, D-4","A-3, B-2, C-4, D-1",  
                                                   "A-4, B-1, C-2, D-3","A-4, B-1, C-3, D-2","A-4, B-3, C-2, D-1","A-4, B-3, C-1, D-2","A-4, B-2, C-1, D-3","A-4, B-2, C-3, D-1"],
                               textvariable=switch_selection_vars[0], width=20, state="readonly", justify="center")
-switch_selection1.place(x=320, y=90)
+switch_selection0.place(x=320, y=90)
 
-switch_selection1.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 0))
+switch_selection0.bind("<<ComboboxSelected>>", lambda event: handle_songs_position(event, 0))
 
 # Start time
 start_time1_spinbox = ttk.Spinbox(switch_frame, textvariable=start_time1_var, values=create_time_values(), wrap="True", width= 10)
@@ -975,7 +946,7 @@ last_switch_button1.place(x=810, y=90)
 #---------------------------------------------------------------------------------------------
 # Second switch
 # Label
-switch2_label = tk.Label(switch_frame, text="2nd switch", font=("Times New Roman", 12))
+switch2_label = tk.Label(switch_frame, text="1st switch", font=("Times New Roman", 12))
 switch2_label.place(x=230, y=130)
 # Selection
 switch_selection2 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
@@ -1010,7 +981,7 @@ last_switch_button2.place(x=810, y=130)
 #---------------------------------------------------------------------------------------------
 # Third switch
 # Label
-switch3_label = tk.Label(switch_frame, text="3rd switch", font=("Times New Roman", 12))
+switch3_label = tk.Label(switch_frame, text="2nd switch", font=("Times New Roman", 12))
 switch3_label.place(x=230, y=170)
 # Selection
 switch_selection3 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
@@ -1045,7 +1016,7 @@ last_switch_button3.place(x=810, y=170)
 #---------------------------------------------------------------------------------------------
 # Four switch
 # Label
-switch4_label = tk.Label(switch_frame, text="4th switch", font=("Times New Roman", 12))
+switch4_label = tk.Label(switch_frame, text="3rd switch", font=("Times New Roman", 12))
 switch4_label.place(x=230, y=210)
 # Selection
 switch_selection4 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
@@ -1080,7 +1051,7 @@ last_switch_button4.place(x=810, y=210)
 #---------------------------------------------------------------------------------------------
 # Fifth switch
 # Label
-switch5_label = tk.Label(switch_frame, text="5th switch", font=("Times New Roman", 12))
+switch5_label = tk.Label(switch_frame, text="4th switch", font=("Times New Roman", 12))
 switch5_label.place(x=230, y=250)
 # Selection
 switch_selection5 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
@@ -1115,7 +1086,7 @@ last_switch_button5.place(x=810, y=250)
 #---------------------------------------------------------------------------------------------
 # Sisxth switch
 # Label
-switch6_label = tk.Label(switch_frame, text="6th switch", font=("Times New Roman", 12))
+switch6_label = tk.Label(switch_frame, text="5th switch", font=("Times New Roman", 12))
 switch6_label.place(x=230, y=290)
 # Selection
 switch_selection6 = ttk.Combobox(switch_frame, values=["A-1, B-2, C-3, D-4","A-1, B-2, C-4, D-3","A-1, B-4, C-3, D-2","A-1, B-4, C-2, D-3","A-1, B-3, C-2, D-4","A-1, B-3, C-4, D-2",
@@ -1156,13 +1127,14 @@ final_frame.place(x=00, y=800)
 
 #START BUTTON
 start_button = tk.Button(final_frame, text="START", bg="green", fg="white", font=("Times New Roman", 12, "bold"),
-                         command=lambda: [start_timer(), on_select(), log_variable_state(), on_run(), activate_speakers()])
+                          command=lambda: [start_timer(), on_select(), log_variable_state(), on_run()])
 start_button.place(x=960, y=15)
 
 #END BUTTON
 end_button = tk.Button(final_frame, text="END", bg="red", fg="white", font=("Times New Roman", 12, "bold"),
-                       command=lambda: [stop_timer(), export_to_txt(), on_pause(), on_clear(), on_reset(), stop_checking_speakers()])
+                       command=lambda: [stop_timer(), export_to_txt(), on_pause(), on_clear(), on_reset(), log_ending_state(), close_speakers()])
 end_button.place(x=1060, y=15)
+
 #------------------------------------------------------------------------------
 #Log action and decode of the response
 
@@ -1180,10 +1152,16 @@ def on_closing():
     close_serial_port_if_open()
     root.destroy()
 
+update_speaker_info()
+
 # Start a background thread to read from Arduino
 thread = threading.Thread(target=read_from_arduino)
 thread.daemon = True
 thread.start()
+
+initialize_store_count()
+
+Count_storage()
 
 #Bind the window close event to the on_closing function
 root.protocol("WM_DELETE_WINDOW", on_closing)
