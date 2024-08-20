@@ -10,29 +10,24 @@
  *  
  *   Hardware:
  *   - Arduino Mega 2560    
- *   https://content.arduino.cc/assets/Pinout-Mega2560rev3_latest.png
- *   - Supply 5V External or 5V USB power (default)   
+ *   - Supply 5V External or 5V USB power *   
  *   - 4CH relay board 5V control logic/up to 250Vac switching
- *   https://www.tinytronics.nl/en/switches/relays/5v-relay-4-channel-high-active-or-low-active
- *   
  *    
  *   ************    Mega 2560 Pinout   *************
  *   Inputs:
- *   SW1 = 18     ==> needs 10K/100n RC filter for debounce/stability
- *   SW2 = 19     ==> needs 10K/100n RC filter for debounce/stability
- *   SW3 = 20     ==> needs 10K/100n RC filter for debounce/stability
- *   SW4 = 21     ==> needs 10K/100n RC filter for debounce/stability
+ *   SW1 = 8    ==> needs 10K/100n RC filter for debounce/stability
+ *   SW2 = 9    ==> needs 10K/100n RC filter for debounce/stability
+ *   SW3 = 10   ==> needs 10K/100n RC filter for debounce/stability
+ *   SW4 = 11   ==> needs 10K/100n RC filter for debounce/stability
  *   
  *   Outputs:
- *   RELAY1 = 5
- *   RELAY2 = 4
- *   RELAY3 = 3
- *   RELAY4 = 2
+ *   RELAY1 = 4
+ *   RELAY2 = 5
+ *   RELAY3 = 6
+ *   RELAY4 = 7
  *   
- *   - SW inputs wired via 4x Lumberg 6P DIN connectors (KV 60), contacs on two centre pins (3 & 6)
- *   https://docs.rs-online.com/f502/0900766b80e0a56e.pdf
+ *   - SW inputs wired via Lumberg 6P DIN connectors (4x), contacs on two centre pins
  *   - Relay/Speaker outputs wired via RCA connectors (4x)
- *   - Sound source input via RCA connecter labelled "input".
  *   
  *   Software:
  *   - USB/SERIAL settings 115200/8/N/1, use CR/NL as terminator when sending data to (Arduino) controller   
@@ -88,7 +83,7 @@
 
 // Debug output switch
 const int DBG_MODE        = 0;        // 0=OFF, 1=PRINT OUT, 2=PLOTTER
-const bool SHW_LATENCY    = 0;        // 0=OFF, 1=ON 
+const bool SHW_LATENCY    = 1;        // 0=OFF, 1=ON 
 const int POLL_MODE       = 0;        // Poll or event mode;  0 = poll off & event on, 1 = poll on & event off
 
 const int PERCH_ACC_THR   = 0;
@@ -98,7 +93,7 @@ const int UPD_DBG_INTVAL  = 1000;     // Debug interval in mSecs
 const int UPD_PLT_INTVAL  = 40;       // Plotter interval in mSecs
 
 const uint16_t Max_Latency = 5000;    //  Max latency time n mSecs // 2500 mSecs
-uint16_t DEBOUNCE_DLY =  125;          // debounce delay
+uint16_t DEBOUNCE_DLY =  250;          // debounce delay
 
 const int Q1_DLY_CNT =  0;        // debounce timer for CH1
 const int Q2_DLY_CNT =  0;        // debounce timer for CH2
@@ -165,8 +160,8 @@ long SER_RXD_VAL                = 0;           // received RXD value
 int GET_VAL                     = 0;           // serial receive value
 
 
-bool RUNMODE = 0;                               // 0 = STOP , RUN = 1
-long Runtime = 0;                               // Runtine in sec after reset/start
+bool RUNMODE = 0;                              // 0 = STOP , RUN = 1
+long Runtime = 0;                              // Runtine in sec after reset/start
 
 int SW1_ACC_TMR = 0;
 int SW2_ACC_TMR = 0;
@@ -241,9 +236,10 @@ void setup()
         Serial.println(Perch_CH3_Count);                // 
         Serial.print("Perch_CH4_Count: ");              //  
         Serial.println(Perch_CH4_Count);                // 
-        Serial.print("Debounce delay: ");               // 
-        Serial.println(DEBOUNCE_DLY);                   //          
-     }       
+        Serial.print("Debounce delay: ");              // 
+        Serial.println(DEBOUNCE_DLY);                        //          
+     }  
+     
    }
    else
    {
@@ -258,7 +254,7 @@ void setup()
      Perch_CH2_Count = 0;                                   // reset count
      Perch_CH3_Count = 0;                                   // reset count
      Perch_CH4_Count = 0;                                   // reset count 
-     DEBOUNCE_DLY = 125;                                    // default value actor delay   
+     DEBOUNCE_DLY = 250;                                         // defult value actor delay   
    
      EEPROM.put(NVM_CH1_CNT_ADR, uint16_t(Perch_CH1_Count));        //
      delay(20);
@@ -347,7 +343,7 @@ void CheckSerial()
                     switch(rx_arr[0])
                     {
                        case 'h': //  help/info                         
-                            Serial.println("*************************************  SERIAL (PC GUI/USB) COMMAND LIST:  ********************************************************");  
+                            Serial.println("  *************************************  SERIAL (PC GUI/USB) COMMAND LIST:  ********************************************************8");  
                             Serial.println(" (use 115200/8/N/1 + use [NL+CR] in the packet terminator)");  
                             Serial.println(""); 
                             Serial.println(" **** Single char commands ****");  
@@ -369,7 +365,7 @@ void CheckSerial()
                             Serial.println(" - c ==> Clear Arduino controller settings (revert to default values) and reset");  
                             Serial.println(" - r ==> Reset controller, this restarts Arduino but keeps settings");                             
                             Serial.println("");                               
-                            Serial.println(" **** SETTERS **** ");  
+                            Serial.println(" **** SETTERS ****");  
                             Serial.println(" - [sdxxx] ==> Set Delay with xxx as timing in mSecs ==> sd210 = set delay to 120 mSecs");      
                             Serial.println(" - [saxy]  ==> Set audio channel, where [x] is channel (1-4) and [y] is open/close with 0=open and 1=cose.");  
                             Serial.println("");                              
@@ -379,9 +375,9 @@ void CheckSerial()
                        break; 
 
                        case 'l': // LIST, list parameters                         
-                            //Serial.println("*");                                // ACK/CMD OK
-                            //Serial.println("LIST");                             // SERIAL/Debug FEEDBACK
-                            Serial.println("");                                   // ACK/CMD OK
+                            //Serial.println("*");                               // ACK/CMD OK
+                            //Serial.println("LIST");                         // SERIAL/Debug FEEDBACK
+                            Serial.println("");                               // ACK/CMD OK
                             Serial.println(RUNMODE);
                             Serial.println(DEBOUNCE_DLY);
                             Serial.println(Perch_SW1_State);
@@ -398,8 +394,8 @@ void CheckSerial()
                        case 'n': // run mode, logic and relays enabled
                           if(DBG_MODE != 2 )
                           {
-                            Serial.println("*");                                // ACK/CMD OK
-                            Serial.println("RUNMODE");                          // SERIAL/Debug FEEDBACK
+                            Serial.println("*");                               // ACK/CMD OK
+                            Serial.println("RUNMODE");                         // SERIAL/Debug FEEDBACK
                           }   
                                                 
                           RUNMODE = 1;   
@@ -408,7 +404,7 @@ void CheckSerial()
                        case 'p': // stop mode, all relays and action stopped
                           if(DBG_MODE != 2 )
                           {
-                            Serial.println("*");                                // ACK/CMD OK
+                            Serial.println("*");                               // ACK/CMD OK
                             Serial.println("STOPMODE");                         // SERIAL/Debug FEEDBACK
                           }
                          
@@ -435,7 +431,7 @@ void CheckSerial()
                           delay(500);                                         // wait before resetting
                           resetFunc();                                        // call MCU reset, this will reboot the Arduino (all RAM storage will be lost).                       break;                      
 
-                       //****************************************   SETTERS     *********************************************************
+                       //*************************************************************************************************
 
                        case 's': // setters
                             switch(rx_arr[1])
@@ -630,7 +626,7 @@ void CheckSerial()
                                                  
                       
 
-                      //****************************************  GETTERS    ****************************************************
+  //*************************************************************************************************
                        
                        case 'g': // getters
                             // Serial2.println();                            // spacer
@@ -776,6 +772,7 @@ void ReadSensors()
 
       Old_SW2_State = 1;
     }
+
 
     if(SW2_ACC_TMR > uint16_t(DEBOUNCE_DLY))
     {
@@ -924,11 +921,11 @@ void SetOutputs()
         Set_Q3_State = 0;    
         Set_Q4_State = 0; 
 
-        digitalWrite(ILED, LOW);      // internal LED OFF
+        digitalWrite(ILED, LOW);  
      }
      else
      {
-        digitalWrite(ILED, HIGH);    // internal LED ON (amber)
+        digitalWrite(ILED, HIGH);  
      }
 
      digitalWrite(SPK_Q1_PIN, Set_Q1_State);  
@@ -936,7 +933,7 @@ void SetOutputs()
      digitalWrite(SPK_Q3_PIN, Set_Q3_State);  
      digitalWrite(SPK_Q4_PIN, Set_Q4_State);     
   
-     UPD_SOP_CNT = 0;                // reset schedule timer
+     UPD_SOP_CNT = 0;
   }
 
  
@@ -1033,7 +1030,7 @@ void SendSerial()
 // the loop routine runs over and over again forever:
 void loop()
 {
-  CheckSerial();               // check and parse serial input from USB/PC
+  CheckSerial();               // check and parse serial input from PC
   ReadSensors();               // Read out sensors/ perch micro switches
   SetOutputs();                // Set Relays and LED(s)
   SendSerial();                // Serial TXD/Debug routines (send to USB/PC) 
