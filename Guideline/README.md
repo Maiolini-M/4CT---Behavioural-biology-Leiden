@@ -7,7 +7,7 @@ This software is designed for four-way operant preference tests in which birds c
 ### References
 1. Riebel, K. (2017). Acoustic preference methods: assessing mates. In C. Brown & T. Riede (Eds.), Comparative Bioacoustics: An overview (pp. 253-201). Bentham Books. https://doi.org/10.2174/9781681083179117010009
 2. Holveck, M. J., & Riebel, K. (2007). Preferred songs predict preferred males: consistency and repeatability of zebra finch females across three test contexts. Animal Behaviour, 74(2), 297–309. https://doi.org/10.1016/j.anbehav.2006.08.016
-3. Wei, J., Liu, Q., & Riebel, K. (2022). Generalisation of early learned tutor song preferences in female zebra finches (Taeniopygia guttata). Behavioural Processes, 201, 104731
+3. Wei, J., Liu, Q., & Riebel, K. (2022). Generalisation of early learned tutor song preferences in female zebra finches (Taeniopygia guttata). Behavioural Processes, 201, 104731 https://doi.org/10.1016/j.beproc.2022.104731
 
 ## How does it work?
 Screenshot of the user interface can be found below (fig. 1). 
