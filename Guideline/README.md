@@ -10,7 +10,7 @@ This software is designed for four-way operant preference tests in which birds c
 3. Wei, J., Liu, Q., & Riebel, K. (2022). Generalisation of early learned tutor song preferences in female zebra finches (Taeniopygia guttata). Behavioural Processes, 201, 104731 https://doi.org/10.1016/j.beproc.2022.104731
 
 ## How does it work?
-Screenshot of the user interface can be found below (fig. 1). 
+Screenshot of the user interface can be found below (Fig. 1). 
 The program allows the user to play sounds from four individual speakers. Sound playbacks are triggered by a bird landing on a perch in front of a speaker. These perches have an automatic tracker that records the exact time the bird lands on the perch. One or multiple songs can be selected to be linked to each speaker, these will be selected locally from the laptop and displayed with the actual path in the program. Once the bird lands on the perch, the song or songs associated with it will be played consecutively.
 
 **Species**: Select which species you are working with. This changes nothing about the settings or functionality of the program. The species name will appear in the final csv file. 
@@ -46,6 +46,9 @@ Clicking manually on the  Sound A button will also elicit a sound playback, mimi
 
 **END**: End the program, deactivate the perches and save the file as .txt file. After the end a summary will appear in the log.
 
+![alt text](http://url/to/img.png)
+*Figure 1*: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
+
 ## Log screen: What is it displayed here
 The log screen firstly displays all necessary detailed information about the experiment. All information similar to the following is displayed in the first line. Next, the time, date, experiment name and species name are shown. After this, information about the perches is shown: the starting position for each perch and sound, the selected perch timeout (in ms) and each sound file that is selected for each song label (A to D). Following this, the set start and end times are also shown.
 
@@ -57,15 +60,5 @@ Use the “Export as CSV” or “Export as TXT” buttons to save the log infor
 
 Note that the log screen can be edited by clicking into it and typing. However, only use this when necessary to add additional information and do not edit any of the displayed text by the program. (***Warning***: The next information of the log screen will be placed in the next line, so be careful where the cursor is positioned!)
 
-## End the experiment and save the trial
-
-Press end and save the file in a location on your computer.
-
-
-
-
-
-
-
-
-Figure 1: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
+![alt text](http://url/to/img.png)
+*Figure 2*: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
