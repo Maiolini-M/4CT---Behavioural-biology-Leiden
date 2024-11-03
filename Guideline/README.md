@@ -24,7 +24,7 @@ The program allows the user to play sounds from four individual speakers. Sound 
 **Save at 00:00:00**: Tick this box if the data should be automatically saved each night at midnight. This function is still under development.
 
 **Sound A-D**: Select the files that should be played back from the matching speaker. The names of the selected files occur in the field to the right. If one file is selected, this file will be played once when the bird lands on the perch and therefore activates the microswitch. The trigger of the perch microswitch and the activation of the speaker associated is evidenced by a small click sound (user feedback).
-When multiple files are selected, these will be played consecutively in the same order, from the first to the last selected (and displayed), when the bird lands on the perch and activates the microswitch. When the bird leaves and comes back to the same perch,the sequence will start from the first file to the last. There is no setting available to randomize the order of the playback files per speaker and a function that stops the previous sound if still going when the new one is activated has still to be implemented.
+When multiple files are selected, these will be played consecutively in the same order, from the first to the last selected (and displayed), when the bird lands on the perch and activates the microswitch. When the bird leaves and comes back to the same perch,the sequence will start from the first file to the last. There is no setting available to randomize the order of the playback files per speaker and a function that stops the previous sound if still going when the new one is activated has still to be implemented. (*! To be implemented*)
 Clicking manually on the  Sound A button will also elicit a sound playback, mimicking the sound activated from the perch.
 (***Warning***: if the audio cable is connected to the box, the sound can’t be heard while the program is not running. The speakers of the carousel are activated when the perch microswitch is activated, activating only the specific one, and at the start of the experiment when pressed the Sound A button. To hear the sound from the laptop before the start of the experiment, unplug the audio cable).
 
@@ -37,18 +37,20 @@ Clicking manually on the  Sound A button will also elicit a sound playback, mimi
 **Switch Position**: Indicate here which position the perches should be in. This is not a physical switching of the perches, but a switching in which sounds are played back by a landing on that particular perch. All options are available in the scroll down menu. (***Warning***: this is a key point of the program and issues can arise if no dropdown menu is selected)
 
 **First and Last position**: Here one can indicate whether it is the first position of the day (corresponding to the start time of the program) or the last position of the day (corresponding to the end time of the program). This option doesn’t trigger anything, but it is developed to help the program and the user to track the time schedule.
-Save as txt/csv: Save locally the file in the format selected (.txt; .csv)
+
+**Save as txt/csv**: Save locally the file in the format selected (.txt; .csv)
 
 **Clear log**: Clear the log
 
-Press START to start the program and activate the perches.
+**START**: Start the program and activate the perches.
 
-Press END to end the program, deactivate the perches and save the file as .txt file. After the end a summary will appear in the log.
+**END**: End the program, deactivate the perches and save the file as .txt file. After the end a summary will appear in the log.
 
 ## Log screen: What is it displayed here
 The log screen firstly displays all necessary detailed information about the experiment. All information similar to the following is displayed in the first line. Next, the time, date, experiment name and species name are shown. After this, information about the perches is shown: the starting position for each perch and sound, the selected perch timeout (in ms) and each sound file that is selected for each song label (A to D). Following this, the set start and end times are also shown.
 
-Once the program has started, each time a bird lands on a perch, the log screen will display which perch the bird landed on, at which time the landing was recorded and which sound file was played back. If a bird does a small hop on the perch, faster than the perch timeout threshold, then this will be recorded as a perch timeout and not shown in the log. In case of using switching: the starting position will be displayed at the beginning of the log, all of them at the end of the experiment when pressed END. The Positions are displayed in this order: 0,1,2,3,4,5 and correspond to the section 0,2,3,4,5; not displaying the occurrences in section 6 (corresponding at the position 5) [*To correct in the next version of the softe*]. The counts are cumulative of the same song, to have the count per section, just subtract the amounts. [*To implement in the next version: count of perches*]
+Once the program has started, each time a bird lands on a perch, the log screen will display which perch the bird landed on, at which time the landing was recorded and which sound file was played back. If a bird does a small hop on the perch, faster than the perch timeout threshold, then this will be recorded as a perch timeout and not shown in the log. In case of using switching: the starting position will be displayed at the beginning of the log, all of them at the end of the experiment when pressed END. The Positions are displayed in this order: 0,1,2,3,4,5 and correspond to the section 0,2,3,4,5; not displaying the occurrences in section 6 (corresponding at the position 5) (*! To be implemented*).
+The counts are cumulative of the same song, to have the count per section, just subtract the amounts. (*! To be implemented*)
 Furthermore, at the end of the program the log screen will show a summary of how many landings were recorded for each perch in total. 
 
 Use the “Export as CSV” or “Export as TXT” buttons to save the log information as either “.csv” or “.txt” files, respectively. After saving the file, clear the log with the “Clear Log” button before proceeding with the next experiment. (ning: The system doesn’t need to be reactivated (closed and reopened) to work with multiple trials, anyway due large data and function handling the miss of the new settings can occur. For this reason, it is always suggested to close and reopen the softe before a new trial if possible).
