@@ -46,7 +46,7 @@ Clicking manually on the  Sound A button will also elicit a sound playback, mimi
 
 **END**: End the program, deactivate the perches and save the file as .txt file. After the end a summary will appear in the log.
 
-![alt text](http://url/to/img.png)
+![alt text](https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/Guideline/Screenshot 4CT1.png)
 *Figure 1*: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
 
 ## Log screen: What is it displayed here
