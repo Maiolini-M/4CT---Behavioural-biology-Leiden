@@ -46,7 +46,8 @@ Clicking manually on the  Sound A button will also elicit a sound playback, mimi
 
 **END**: End the program, deactivate the perches and save the file as .txt file. After the end a summary will appear in the log.
 
-![alt text]([https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/Guideline/Screenshot 4CT1.png](https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/blob/main/Guideline/Screenshot%204CT1.png))
+![Screenshot 4CT1](https://github.com/user-attachments/assets/ef10bba3-cbef-4dbf-950f-8941263a8af8)
+
 *Figure 1*: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
 
 ## Log screen: What is it displayed here
@@ -60,5 +61,6 @@ Use the “Export as CSV” or “Export as TXT” buttons to save the log infor
 
 Note that the log screen can be edited by clicking into it and typing. However, only use this when necessary to add additional information and do not edit any of the displayed text by the program. (***Warning***: The next information of the log screen will be placed in the next line, so be careful where the cursor is positioned!)
 
-![alt text]([http://url/to/img.png](https://github.com/Maiolini-M/4CT---Behavioural-biology-Leiden/blob/main/Guideline/Screenshot%204CT3.png))
+![Screenshot 4CT3](https://github.com/user-attachments/assets/84d1fff3-5f79-4105-899f-8a9f3c0a1869)
+
 *Figure 2*: Screenshot of the user interface of the carousel program. This interface is explained in section 2 of the guideline.
